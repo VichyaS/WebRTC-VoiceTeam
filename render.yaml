@@ -11,7 +11,24 @@ services:
     envVars:
       - key: PORT
         value: 10000
-    headers:
+      - key: RENDER
+        value: "true"
+      - key: NODE_ENV
+        value: production
+      # ── Okta OIDC (ถ้ามี) ──
+      # - key: OIDC_ISSUER
+      #   value: https://your-org.okta.com
+      # - key: OIDC_CLIENT_ID
+      #   value: your-client-id
+      # - key: OIDC_CLIENT_SECRET
+      #   value: your-client-secret
+      # - key: OIDC_CALLBACK_URL
+      #   value: https://your-app.onrender.com/api/auth/callback
+      # ── LDAP/AD (ถ้ามี) ──
+      # - key: LDAP_URL
+      #   value: ldap://your-ad-server:389
+      # - key: LDAP_BASE_DN
+      #   value: dc=yourcompany,dc=com
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
@@ -24,3 +41,9 @@ services:
       - path: /*
         name: Strict-Transport-Security
         value: max-age=31536000; includeSubDomains
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
+      - path: /*
+        name: Permissions-Policy
+        value: microphone=(self), camera=(self), speaker=(self)

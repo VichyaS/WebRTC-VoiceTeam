@@ -13,6 +13,9 @@ html/favicon.png
 .env
 .env.local
 
+# Demo users (contains passwords)
+conf/ad_users.json
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -7,5 +7,10 @@
     "dev": "node server.js"
   },
   "author": "Voice Team",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.3",
+    "jwks-rsa": "^4.1.0",
+    "ldapjs": "^3.0.7"
+  }
 }

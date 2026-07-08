@@ -93,6 +93,13 @@ let c2c_settingsModal = null;
 let c2c_settingsCloseBtn = null;
 let c2c_settingsSaveBtn = null;
 
+// Auth (login/logout) elements
+let c2c_loginBtn = null;
+let c2c_userBtn = null;
+let c2c_userMenuModal = null;
+let c2c_userMenuCloseBtn = null;
+let c2c_logoutBtn = null;
+
 // Device test elements
 let c2c_deviceTestBtn = null;
 let c2c_deviceTestDiv = null;
@@ -539,6 +546,13 @@ function c2c_getHTMLPageReferences() {
     c2c_settingsModal = document.getElementById('c2c_settings_modal');
     c2c_settingsCloseBtn = document.getElementById('c2c_settings_close_btn');
     c2c_settingsSaveBtn = document.getElementById('c2c_settings_save_btn');
+
+    // Get auth elements
+    c2c_loginBtn = document.getElementById('c2c_login_btn');
+    c2c_userBtn = document.getElementById('c2c_user_btn');
+    c2c_userMenuModal = document.getElementById('c2c_user_menu_modal');
+    c2c_userMenuCloseBtn = document.getElementById('c2c_user_menu_close_btn');
+    c2c_logoutBtn = document.getElementById('c2c_logout_btn');
 
     // Get debug panel elements
     c2c_debugBtn = document.getElementById('c2c_debug_btn');
@@ -1752,6 +1766,7 @@ function c2c_loadSettingsToModal() {
     document.getElementById('cfg_addresses').value = addrStr;
     document.getElementById('cfg_call').value = c2c_config.call || '';
     document.getElementById('cfg_caller').value = c2c_config.caller || '';
+    document.getElementById('cfg_callerDN').value = c2c_config.callerDN || '';
     document.getElementById('cfg_type').value = c2c_config.type || 'audio';
     document.getElementById('cfg_callAutoStart').checked = !!(c2c_config.callAutoStart && c2c_config.callAutoStart !== 'no');
     document.getElementById('cfg_selectDevicesEnabled').checked = !!c2c_config.selectDevicesEnabled;
@@ -1768,6 +1783,7 @@ function c2c_saveSettingsFromModal() {
     let addresses = document.getElementById('cfg_addresses').value.trim();
     let call = document.getElementById('cfg_call').value.trim();
     let caller = document.getElementById('cfg_caller').value.trim();
+    let callerDN = document.getElementById('cfg_callerDN').value.trim();
     let type = document.getElementById('cfg_type').value;
     let callAutoStart = document.getElementById('cfg_callAutoStart').checked;
     let selectDevicesEnabled = document.getElementById('cfg_selectDevicesEnabled').checked;
@@ -1788,6 +1804,7 @@ function c2c_saveSettingsFromModal() {
     }
     if (call) c2c_config.call = call;
     if (caller) c2c_config.caller = caller;
+    if (callerDN) c2c_config.callerDN = callerDN;
     if (type) c2c_config.type = type;
     c2c_config.callAutoStart = callAutoStart ? 'yes' : 'no';
     c2c_config.selectDevicesEnabled = selectDevicesEnabled;
@@ -1801,12 +1818,14 @@ function c2c_saveSettingsFromModal() {
         addresses: c2c_serverConfig.addresses,
         call: c2c_config.call,
         caller: c2c_config.caller,
+        callerDN: c2c_config.callerDN,
         type: c2c_config.type,
         callAutoStart: c2c_config.callAutoStart,
         selectDevicesEnabled: c2c_config.selectDevicesEnabled,
         dtmfKeypadEnabled: c2c_config.dtmfKeypadEnabled,
         screenSharingEnabled: c2c_config.screenSharingEnabled,
-        selfVideoEnabled: c2c_config.selfVideoEnabled
+        selfVideoEnabled: c2c_config.selfVideoEnabled,
+        _adApplied: false  // manual save = not from AD
     }));
 
     c2c_ac_log('Settings saved. Reloading page to apply...');
@@ -1826,13 +1845,14 @@ function c2c_loadSettingsFromStorage() {
         if (saved.addresses) c2c_serverConfig.addresses = saved.addresses;
         if (saved.call) c2c_config.call = saved.call;
         if (saved.caller) c2c_config.caller = saved.caller;
+        if (saved.callerDN) c2c_config.callerDN = saved.callerDN;
         if (saved.type) c2c_config.type = saved.type;
         if (saved.callAutoStart !== undefined) c2c_config.callAutoStart = saved.callAutoStart;
         if (saved.selectDevicesEnabled !== undefined) c2c_config.selectDevicesEnabled = saved.selectDevicesEnabled;
         if (saved.dtmfKeypadEnabled !== undefined) c2c_config.dtmfKeypadEnabled = saved.dtmfKeypadEnabled;
         if (saved.screenSharingEnabled !== undefined) c2c_config.screenSharingEnabled = saved.screenSharingEnabled;
         if (saved.selfVideoEnabled !== undefined) c2c_config.selfVideoEnabled = saved.selfVideoEnabled;
-        c2c_ac_log('Loaded saved settings from sessionStorage');
+        c2c_ac_log('Loaded saved settings from sessionStorage' + (saved._adApplied ? ' (from AD)' : ''));
     } catch (e) {
         c2c_ac_log('Error loading saved settings', e);
     }
@@ -2199,8 +2219,237 @@ function c2c_gui_phoneDuringCall() {
     }
 }
 
-// Start phone.
-c2c_init();
+// ──────────────────────────────────────────────
+// Authentication-aware initialization
+// ──────────────────────────────────────────────
+
+// Session data from server
+let c2c_sessionData = null;
+
+/**
+ * Check session with server and apply AD config if authenticated.
+ * Shows login button if not authenticated, or user button if authenticated.
+ */
+async function c2c_initAuth() {
+    try {
+        const resp = await fetch('/api/session', { credentials: 'same-origin' });
+        const data = await resp.json();
+
+        if (data.authenticated) {
+            c2c_sessionData = data;
+            c2c_ac_log(`[Auth] Authenticated as: ${data.user}`);
+
+            // Apply AD attributes to config
+            c2c_applyADConfig(data.attributes);
+
+            // Show user button, hide login button (query DOM directly)
+            const loginBtn = document.getElementById('c2c_login_btn');
+            const userBtn = document.getElementById('c2c_user_btn');
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (userBtn) {
+                userBtn.style.display = 'inline-flex';
+                userBtn.title = `Signed in as ${data.user}`;
+            }
+
+            // Proceed with normal initialization
+            c2c_init();
+        } else {
+            // Not authenticated — show login button
+            c2c_ac_log('[Auth] Not authenticated. Showing login button.');
+            const loginBtn = document.getElementById('c2c_login_btn');
+            const userBtn = document.getElementById('c2c_user_btn');
+            if (loginBtn) {
+                loginBtn.style.display = 'inline-flex';
+                loginBtn.title = 'Sign in';
+                loginBtn.onclick = function () {
+                    window.location.href = '/html/login.html';
+                };
+            }
+            if (userBtn) userBtn.style.display = 'none';
+
+            // Still load the phone but with default config
+            c2c_init();
+        }
+    } catch (e) {
+        c2c_ac_log('[Auth] Session check failed (server may be starting):', e);
+        // Proceed without auth
+        const loginBtn = document.getElementById('c2c_login_btn');
+        if (loginBtn) {
+            loginBtn.style.display = 'inline-flex';
+            loginBtn.onclick = function () {
+                window.location.href = '/html/login.html';
+            };
+        }
+        c2c_init();
+    }
+}
+
+/**
+ * Apply AD/LDAP attributes to c2c runtime configuration.
+ * Maps: domain, addresses, call, caller, callerDN
+ */
+function c2c_applyADConfig(attrs) {
+    if (!attrs) return;
+
+    c2c_ac_log('[Auth] Applying AD attributes to config:');
+    
+    // domain
+    if (attrs.domain) {
+        c2c_serverConfig.domain = attrs.domain;
+        c2c_ac_log(`  domain = ${attrs.domain}`);
+    }
+    
+    // addresses — only apply if it's a non-empty array or non-empty string
+    if (attrs.addresses) {
+        if (Array.isArray(attrs.addresses) && attrs.addresses.length > 0) {
+            c2c_serverConfig.addresses = attrs.addresses;
+        } else if (typeof attrs.addresses === 'string' && attrs.addresses.trim()) {
+            c2c_serverConfig.addresses = attrs.addresses.split(',').map(s => {
+                s = s.trim();
+                if (!s.startsWith('ws://') && !s.startsWith('wss://')) {
+                    s = 'wss://' + s;
+                }
+                return s;
+            });
+        } else {
+            c2c_ac_log(`  addresses skipped (empty or invalid)`);
+        }
+        if (Array.isArray(c2c_serverConfig.addresses)) {
+            c2c_ac_log(`  addresses = ${JSON.stringify(c2c_serverConfig.addresses)}`);
+        }
+    }
+    
+    // call
+    if (attrs.call) {
+        c2c_config.call = attrs.call;
+        c2c_ac_log(`  call = ${attrs.call}`);
+    }
+    
+    // caller
+    if (attrs.caller) {
+        c2c_config.caller = attrs.caller;
+        c2c_ac_log(`  caller = ${attrs.caller}`);
+    }
+    
+    // callerDN
+    if (attrs.callerDN) {
+        c2c_config.callerDN = attrs.callerDN;
+        c2c_ac_log(`  callerDN = ${attrs.callerDN}`);
+    }
+
+    // Save to sessionStorage so it persists across page reloads
+    sessionStorage.setItem('c2c_ui_config', JSON.stringify({
+        domain: c2c_serverConfig.domain,
+        addresses: c2c_serverConfig.addresses,
+        call: c2c_config.call,
+        caller: c2c_config.caller,
+        callerDN: c2c_config.callerDN,
+        type: c2c_config.type,
+        callAutoStart: c2c_config.callAutoStart,
+        selectDevicesEnabled: c2c_config.selectDevicesEnabled,
+        dtmfKeypadEnabled: c2c_config.dtmfKeypadEnabled,
+        screenSharingEnabled: c2c_config.screenSharingEnabled,
+        selfVideoEnabled: c2c_config.selfVideoEnabled,
+        _adApplied: true
+    }));
+
+    c2c_debugAddEntry('info', '[Auth] AD config applied: domain=' + attrs.domain + ' call=' + attrs.call + ' caller=' + attrs.caller);
+}
+
+// Setup auth button handlers once DOM is ready
+function c2c_setupAuthHandlers() {
+    // User button → open user menu (use direct DOM query)
+    const userBtn = document.getElementById('c2c_user_btn');
+    if (userBtn) {
+        userBtn.onclick = function () {
+            c2c_openUserMenu();
+        };
+    }
+    // User menu close
+    const userMenuCloseBtn = document.getElementById('c2c_user_menu_close_btn');
+    if (userMenuCloseBtn) {
+        userMenuCloseBtn.onclick = function () {
+            const modal = document.getElementById('c2c_user_menu_modal');
+            if (modal) modal.style.display = 'none';
+        };
+    }
+    // Close modal on overlay click
+    const userMenuModal = document.getElementById('c2c_user_menu_modal');
+    if (userMenuModal) {
+        userMenuModal.onclick = function (e) {
+            if (e.target === userMenuModal) {
+                userMenuModal.style.display = 'none';
+            }
+        };
+    }
+    // Logout button
+    const logoutBtn = document.getElementById('c2c_logout_btn');
+    if (logoutBtn) {
+        logoutBtn.onclick = async function () {
+            try {
+                await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+            } catch (e) {}
+            // Clear session storage
+            sessionStorage.removeItem('c2c_ui_config');
+            sessionStorage.removeItem('c2c_restoreCall');
+            // Redirect to login
+            window.location.href = '/html/login.html';
+        };
+    }
+}
+
+/**
+ * Open user menu and populate with session data
+ */
+function c2c_openUserMenu() {
+    if (!c2c_sessionData) {
+        // Try to fetch fresh session data
+        fetch('/api/session', { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.authenticated) {
+                    c2c_sessionData = data;
+                    c2c_populateUserMenu(data);
+                }
+            })
+            .catch(() => {});
+        return;
+    }
+    c2c_populateUserMenu(c2c_sessionData);
+}
+
+function c2c_populateUserMenu(data) {
+    const attrs = data.attributes || {};
+    
+    document.getElementById('c2c_user_display_name').textContent = attrs.callerDN || data.user;
+    document.getElementById('c2c_user_username').textContent = '@' + data.user;
+    document.getElementById('c2c_attr_domain').textContent = attrs.domain || '-';
+    
+    let addrStr = '';
+    if (Array.isArray(attrs.addresses)) {
+        addrStr = attrs.addresses.join(', ');
+    } else {
+        addrStr = attrs.addresses || '-';
+    }
+    document.getElementById('c2c_attr_addresses').textContent = addrStr;
+    document.getElementById('c2c_attr_call').textContent = attrs.call || '-';
+    document.getElementById('c2c_attr_caller').textContent = attrs.caller || '-';
+    document.getElementById('c2c_attr_callerDN').textContent = attrs.callerDN || '-';
+    
+    c2c_userMenuModal.style.display = 'flex';
+}
+
+// ── Start with auth check ───────────────────
+// This replaces the original c2c_init() call at the bottom
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        c2c_setupAuthHandlers();
+        c2c_initAuth();
+    });
+} else {
+    c2c_setupAuthHandlers();
+    c2c_initAuth();
+}
 
 /*
   The optional function c2c_create_x_header() 
