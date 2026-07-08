@@ -234,7 +234,7 @@
                 </span>
             </button>
 
-            <!-- Auth0 / SSO divider -->
+            <!-- Auth0 / SSO divider (shown when OIDC is configured) -->
             <div id="auth0Section" style="display:none;margin-top:6px;">
                 <div style="display:flex;align-items:center;gap:12px;margin:12px 0;">
                     <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
@@ -283,10 +283,24 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.oidcEnabled) {
-                        document.getElementById('auth0Section').style.display = 'block';
+                        const section = document.getElementById('auth0Section');
+                        if (section) section.style.display = 'block';
                     }
                 })
-                .catch(() => {});
+                .catch(function(err) {
+                    // If /api/auth/status fails (e.g. Render cold start), retry after 2s
+                    setTimeout(function() {
+                        fetch('/api/auth/status', { credentials: 'same-origin' })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                if (data.oidcEnabled) {
+                                    var s = document.getElementById('auth0Section');
+                                    if (s) s.style.display = 'block';
+                                }
+                            })
+                            .catch(function() {});
+                    }, 2000);
+                });
 
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();

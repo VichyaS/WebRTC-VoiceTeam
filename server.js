@@ -972,6 +972,21 @@ const server = http.createServer((req, res) => {
     // Remove query strings (not needed for static file serving)
     reqPath = reqPath.split('?')[0].split('#')[0];
 
+    // Auth check: redirect to login when authentication is configured
+    // If OIDC or LDAP is enabled, require login before accessing main widget
+    const isMainWidget = reqPath === '/html/index.html';
+    const authConfigured = !!(process.env.OIDC_ISSUER || process.env.LDAP_URL);
+    if (isMainWidget && authConfigured) {
+        const cookies = parseCookies(req);
+        const token = cookies['c2c_session'];
+        const isAuthenticated = token && SESSIONS.has(token) && SESSIONS.get(token).expires > Date.now();
+        if (!isAuthenticated) {
+            res.writeHead(302, { Location: '/html/login.html' });
+            res.end();
+            return;
+        }
+    }
+
     // Prevent directory traversal: resolve and verify path is within project
     const normalizedPath = path.posix ? path.posix.normalize(reqPath) : path.normalize(reqPath);
     const resolvedPath = path.resolve(__dirname, '.' + normalizedPath);
