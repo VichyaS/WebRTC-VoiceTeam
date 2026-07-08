@@ -9,7 +9,9 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
-const BIND_ADDR = process.env.BIND_ADDR || '127.0.0.1'; // Set BIND_ADDR=0.0.0.0 for Render/cloud
+// Auto-detect Render cloud environment — bind to 0.0.0.0 so Render can detect the port
+const isRender = !!process.env.RENDER;
+const BIND_ADDR = process.env.BIND_ADDR || (isRender ? '0.0.0.0' : '127.0.0.1');
 
 const MIME_TYPES = new Map([
     ['.html', 'text/html; charset=utf-8'],
@@ -123,14 +125,17 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, BIND_ADDR, () => {
-    const displayAddr = BIND_ADDR === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
+    const isRender = !!process.env.RENDER;
+    const displayAddr = isRender ? '0.0.0.0' : BIND_ADDR;
     console.log('╔══════════════════════════════════════════╗');
-    console.log('║     Voice Team - Dev Server            ║');
+    console.log('║     Voice Team - Server                ║');
     console.log('╠══════════════════════════════════════════╣');
-    console.log(`║  Local:   http://${displayAddr}:${PORT}        ║`);
+    console.log(`║  Server:  http://${displayAddr}:${PORT}        ║`);
     console.log('║                                          ║');
-    console.log('║  ⚠  DEVELOPMENT SERVER ONLY              ║');
-    console.log('║  ⚠  Do not expose to the internet        ║');
-    console.log('║  ⚠  Use nginx/apache for production      ║');
+    if (isRender) {
+        console.log('║  ✅ Running on Render (0.0.0.0)          ║');
+    } else {
+        console.log('║  ⚠  Local dev only — not for internet   ║');
+    }
     console.log('╚══════════════════════════════════════════╝');
 });
