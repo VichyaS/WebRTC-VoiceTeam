@@ -728,8 +728,25 @@ function extractOidcAttributes(userInfo) {
  */
 function handleOidcLogin(req, res) {
     if (!OIDC_ENABLED) {
-        res.writeHead(400, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
-        res.end('OIDC (Okta) is not configured. Set OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET.');
+        // Return a simple HTML page with error + link back to login
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(
+'<!DOCTYPE html><html><head><title>SSO Not Configured</title>' +
+'<style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#111;color:#fff;margin:0}' +
+'.card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:40px;max-width:400px;text-align:center}' +
+'h2{color:#FF9F0A;margin-top:0}code{background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px;font-size:13px}' +
+'a{color:#409CFF;text-decoration:none}a:hover{text-decoration:underline}' +
+'</style></head><body>' +
+'<div class="card">' +
+'<h2>⚠️ SSO Not Configured</h2>' +
+'<p style="color:#aaa;font-size:14px;line-height:1.6">' +
+'To use Okta SSO, set these environment variables:<br><br>' +
+'<code>OIDC_ISSUER</code><br>' +
+'<code>OIDC_CLIENT_ID</code><br>' +
+'<code>OIDC_CLIENT_SECRET</code><br><br>' +
+'Or ask your administrator to enable SSO.</p>' +
+'<a href="/html/login.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#007AFF;color:#fff;border-radius:10px;font-weight:600">Back to Login</a>' +
+'</div></body></html>');
         return;
     }
 
