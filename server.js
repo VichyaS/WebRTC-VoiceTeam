@@ -973,9 +973,8 @@ const server = http.createServer((req, res) => {
     reqPath = reqPath.split('?')[0].split('#')[0];
 
     // Auth check: redirect to login when authentication is configured
-    // If OIDC or LDAP is enabled, require login before accessing main widget
     const isMainWidget = reqPath === '/html/index.html';
-    const authConfigured = !!(process.env.OIDC_ISSUER || process.env.LDAP_URL);
+    const authConfigured = OIDC_ENABLED || !!(process.env.LDAP_URL);
     if (isMainWidget && authConfigured) {
         const cookies = parseCookies(req);
         const token = cookies['c2c_session'];
@@ -1025,8 +1024,16 @@ const server = http.createServer((req, res) => {
             }
             return;
         }
+
+        // Inject server-side auth state into login.html (no client-side fetch needed)
+        let responseData = data;
+        if (ext === '.html' && resolvedPath.endsWith('login.html')) {
+            const authScript = '<script>window._oidcEnabled=' + OIDC_ENABLED + ';window._ldapEnabled=' + (!!process.env.LDAP_URL) + ';</script>';
+            responseData = Buffer.from(data.toString('utf8').replace('<!--SERVER_AUTH_STATE-->', authScript));
+        }
+
         res.writeHead(200, { 'Content-Type': contentType, ...SECURITY_HEADERS });
-        res.end(data);
+        res.end(responseData);
     });
 });
 
