@@ -1,0 +1,11 @@
+{
+  "name": "voice-team-click-to-call",
+  "version": "1.0.0",
+  "description": "Voice Team - WebRTC Click-to-Call Widget",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "author": "Voice Team",
+  "license": "MIT"
+}

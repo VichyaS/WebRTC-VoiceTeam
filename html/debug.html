@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<!--
+    Voice Team - Debug Log Panel
+    Opens as a separate window from the Click-to-Call widget.
+-->
+<html>
+
+<head>
+    <title>Voice Team - Debug Log</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        /* ============================================
+           iOS 17 Style - Debug Log Window
+           ============================================ */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: rgba(0, 0, 0, 0.92);
+            min-height: 100vh;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        .debug-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-shrink: 0;
+            -webkit-app-region: drag;
+        }
+
+        .debug-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .debug-header h2 strong {
+            color: #409CFF;
+        }
+
+        .debug-header-actions {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .debug-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.55);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .debug-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .debug-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* Toolbar */
+        .debug-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            flex-shrink: 0;
+            gap: 10px;
+        }
+
+        .debug-toolbar .status-text {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .debug-toolbar .status-text .status-ok { color: #34C759; }
+        .debug-toolbar .status-text .status-error { color: #FF453A; }
+        .debug-toolbar .status-text .status-warn { color: #FF9F0A; }
+
+        .debug-toolbar .action-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.55);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .debug-toolbar .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .debug-toolbar .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .debug-toolbar .action-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Log container */
+        #debug_log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 20px;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            font-size: 11px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #debug_log .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            word-break: break-all;
+        }
+
+        #debug_log .log-entry .log-info { color: rgba(255, 255, 255, 0.7); }
+        #debug_log .log-entry .log-warn { color: #FF9F0A; }
+        #debug_log .log-entry .log-error { color: #FF453A; }
+        #debug_log .log-entry .log-success { color: #34C759; }
+        #debug_log .log-entry .log-debug { color: #409CFF; }
+
+        #debug_log::-webkit-scrollbar { width: 3px; }
+        #debug_log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        .log-count {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-left: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="debug-header">
+        <h2>Voice <strong>Team</strong> · Debug</h2>
+        <div class="debug-header-actions">
+            <button id="btn_copy" class="debug-btn" title="Copy all logs">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button id="btn_clear" class="debug-btn" title="Clear logs">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="debug-toolbar">
+        <span id="status_text" class="status-text">Status: <span class="status-ok">Idle</span></span>
+        <span id="log_count" class="log-count">0 entries</span>
+        <button id="btn_diag" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Test SBC
+        </button>
+    </div>
+
+    <div id="debug_log"></div>
+
+    <script>
+        // Local escapeHtml polyfill (in case opener.c2c_escapeHtml is unavailable)
+        function debugEscapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Communicate with the parent widget via window.opener
+        const opener = window.opener;
+
+        function refreshLogs() {
+            if (!opener || !opener.c2c_debugEntries) return;
+            const logDiv = document.getElementById('debug_log');
+            const countSpan = document.getElementById('log_count');
+            const entries = opener.c2c_debugEntries;
+
+            logDiv.innerHTML = '';
+            for (const entry of entries) {
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                const escaped = opener.c2c_escapeHtml ? opener.c2c_escapeHtml(entry.text) : debugEscapeHtml(entry.text);
+                div.innerHTML = '<span class="log-' + entry.level + '">' + escaped + '</span>';
+                logDiv.appendChild(div);
+            }
+            logDiv.scrollTop = logDiv.scrollHeight;
+            countSpan.textContent = entries.length + ' entries';
+        }
+
+        function updateStatus() {
+            if (!opener) return;
+            const el = document.getElementById('status_text');
+            if (opener.c2c_updateDebugStatus) {
+                // We can't easily call it, so replicate
+                let lastEntries = (opener.c2c_debugEntries || []).slice(-3);
+                let hasError = lastEntries.some(e => e.level === 'error');
+                let hasWarn = lastEntries.some(e => e.level === 'warn');
+                let wsState = opener.c2c_isWsConnected ? 'Connected' : 
+                    (opener.c2c_phone && opener.c2c_phone.isInitialized() ? 'Connecting...' : 'Idle');
+                if (hasError) {
+                    el.innerHTML = 'Status: <span class="status-error">Has errors</span>';
+                } else if (hasWarn) {
+                    el.innerHTML = 'Status: <span class="status-warn">Has warnings</span>';
+                } else {
+                    el.innerHTML = 'Status: <span class="status-ok">' + wsState + '</span>';
+                }
+            }
+        }
+
+        // Periodic refresh
+        setInterval(() => {
+            refreshLogs();
+            updateStatus();
+        }, 500);
+
+        // Copy button
+        document.getElementById('btn_copy').onclick = function () {
+            if (!opener || !opener.c2c_debugEntries) return;
+            const text = opener.c2c_debugEntries.map(e => e.text).join('\n');
+            navigator.clipboard.writeText(text).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            });
+        };
+
+        // Clear button
+        document.getElementById('btn_clear').onclick = function () {
+            if (!opener || !opener.c2c_clearDebugLog) return;
+            opener.c2c_clearDebugLog();
+            document.getElementById('debug_log').innerHTML = '';
+            document.getElementById('log_count').textContent = '0 entries';
+        };
+
+        // SBC Diagnostic button
+        document.getElementById('btn_diag').onclick = function () {
+            if (!opener || !opener.c2c_diagnoseSBC) return;
+            opener.c2c_diagnoseSBC();
+        };
+
+        // Initial load
+        refreshLogs();
+        updateStatus();
+    </script>
+</body>
+</html>

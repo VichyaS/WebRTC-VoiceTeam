@@ -1,0 +1,1433 @@
+    /* ============================================
+   Voice Team - iOS 17 Style Design
+   Inspired by iOS 17 aesthetics: frosted glass,
+   vibrant gradients, pill-shaped controls,
+   dynamic blur effects, and seamless animations.
+   ============================================ */
+
+/* ---------- Import Google Font ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ---------- CSS Variables ---------- */
+:root {
+    --primary: #007AFF;
+    --primary-light: #409CFF;
+    --primary-dark: #0060DF;
+    --primary-glow: rgba(0, 122, 255, 0.35);
+    --success: #34C759;
+    --warning: #FF9F0A;
+    --danger: #FF453A;
+    --bg-dark: #000000;
+    --bg-card: rgba(255, 255, 255, 0.08);
+    --bg-card-hover: rgba(255, 255, 255, 0.12);
+    --bg-card-active: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-border-hover: rgba(255, 255, 255, 0.2);
+    --text-primary: #FFFFFF;
+    --text-secondary: rgba(255, 255, 255, 0.55);
+    --text-tertiary: rgba(255, 255, 255, 0.3);
+    --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.6);
+    --shadow-btn: 0 8px 28px rgba(0, 122, 255, 0.3);
+    --radius-xs: 8px;
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-full: 9999px;
+}
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    background: var(--bg-dark);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- iOS 17 Dynamic Background ---------- */
+body::before {
+    content: '';
+    position: fixed;
+    top: -60%;
+    left: -60%;
+    width: 220%;
+    height: 220%;
+    background:
+        radial-gradient(ellipse at 25% 40%, rgba(0, 122, 255, 0.15) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 25%, rgba(175, 82, 222, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(0, 200, 255, 0.06) 0%, transparent 45%);
+    animation: bgShift 25s ease-in-out infinite alternate;
+    z-index: 0;
+    pointer-events: none;
+}
+
+@keyframes bgShift {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    50% { transform: translate(1%, 0.5%) rotate(1deg) scale(1.02); }
+    100% { transform: translate(-1%, -0.5%) rotate(-1deg) scale(0.98); }
+}
+
+/* ---------- iOS 17 Phone Frame ---------- */
+.vct-phone-frame {
+    width: 390px;
+    max-width: 100%;
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(60px) saturate(1.4);
+    -webkit-backdrop-filter: blur(60px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 48px;
+    padding: 28px 22px 32px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Inner glow */
+.vct-phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2) 30%, rgba(255,255,255,0.2) 70%, transparent);
+    z-index: 2;
+}
+
+/* Dynamic Island simulation */
+.vct-phone-frame::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 30px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 5;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+/* ---------- Top Bar ---------- */
+.vct-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    margin-bottom: 22px;
+    position: relative;
+    z-index: 3;
+}
+
+.vct-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vct-logo-icon {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.vct-logo-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.vct-logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+}
+
+.vct-logo-text-sub {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 0px;
+}
+
+.vct-logo-text strong {
+    color: var(--primary-light);
+    font-weight: 800;
+}
+
+/* ---------- Settings & Debug Buttons ---------- */
+.vct-settings-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    color: var(--text-secondary);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+}
+
+.vct-settings-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+}
+
+.vct-settings-btn:active {
+    transform: scale(0.88);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* ---------- Status Badge ---------- */
+.vct-status-badge {
+    display: none;
+    font-size: 11px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-full);
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    text-align: center;
+    backdrop-filter: blur(10px);
+    letter-spacing: 0.2px;
+    position: relative;
+    z-index: 3;
+}
+
+/* ---------- Widget Container ---------- */
+.vct-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 0;
+    position: relative;
+    z-index: 3;
+}
+
+/* ---------- Toolbar (iOS Tab Bar style) ---------- */
+.vct-toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(20px);
+}
+
+.vct-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    display: none;
+    position: relative;
+    letter-spacing: 0.1px;
+}
+
+.vct-tool-btn svg {
+    width: 16px;
+    height: 16px;
+    opacity: 0.65;
+    transition: opacity 0.2s;
+}
+
+.vct-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+.vct-tool-btn:hover svg {
+    opacity: 1;
+}
+
+.vct-tool-btn:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* ---------- Video Area ---------- */
+.vct-video-area {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    position: relative;
+}
+
+.vct-video-area video {
+    border-radius: var(--radius-md);
+    background: #000;
+    object-fit: contain;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1), height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Video placeholder when no video */
+.vct-video-area:empty::after {
+    display: none;
+}
+
+/* ---------- Status Line ---------- */
+.vct-status-line {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+    min-height: 24px;
+    line-height: 24px;
+    padding: 4px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-full);
+    width: 100%;
+    max-width: 260px;
+    backdrop-filter: blur(10px);
+}
+
+/* ---------- Call Button (iOS 17 Pill Style) ---------- */
+.vct-call-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 190px;
+    height: 64px;
+    border: none;
+    border-radius: var(--radius-full);
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+    overflow: hidden;
+    display: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.vct-call-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Ready state - iOS green call button */
+.vct-call-btn.ready {
+    background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
+    box-shadow: 0 8px 32px rgba(52, 199, 89, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.vct-call-btn.ready::after {
+    opacity: 1;
+}
+
+.vct-call-btn.ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(52, 199, 89, 0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.vct-call-btn.ready:active {
+    transform: translateY(0) scale(0.96);
+    box-shadow: 0 4px 20px rgba(52, 199, 89, 0.25);
+}
+
+/* Calling state */
+.vct-call-btn.calling {
+    background: linear-gradient(135deg, var(--warning) 0%, #E08600 100%);
+    box-shadow: 0 8px 32px rgba(255, 159, 10, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    animation: callPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes callPulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(255, 159, 10, 0.35); }
+    50% { box-shadow: 0 8px 48px rgba(255, 159, 10, 0.5), 0 0 80px rgba(255, 159, 10, 0.08); }
+}
+
+.vct-call-btn.calling .vct-call-btn-icon {
+    animation: callIconSpin 2s ease-in-out infinite;
+}
+
+@keyframes callIconSpin {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(8deg) scale(1.1); }
+}
+
+/* Hangup state - iOS red circle */
+.vct-call-btn.hangup {
+    background: linear-gradient(135deg, var(--danger) 0%, #C0291E 100%);
+    box-shadow: 0 8px 32px rgba(255, 69, 58, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+}
+
+.vct-call-btn.hangup:hover {
+    transform: scale(1.06);
+    box-shadow: 0 12px 40px rgba(255, 69, 58, 0.45);
+}
+
+.vct-call-btn.hangup:active {
+    transform: scale(0.94);
+}
+
+.vct-call-btn.hangup .vct-call-btn-label {
+    display: none;
+}
+
+/* Disabled state */
+.vct-call-btn.disabled {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: none;
+    cursor: not-allowed;
+    color: var(--text-tertiary);
+}
+
+.vct-call-btn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Call button icon */
+.vct-call-btn-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+/* ---------- Options Row ---------- */
+.vct-options-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    min-height: 38px;
+    padding: 4px 0;
+}
+
+.vct-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: none;
+    transition: color 0.2s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.vct-toggle-label:hover {
+    color: var(--text-primary);
+}
+
+/* iOS 17 toggle switch */
+.vct-toggle-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 40px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    flex-shrink: 0;
+}
+
+.vct-toggle-label input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.vct-toggle-label input[type="checkbox"]:checked {
+    background: var(--primary);
+}
+
+.vct-toggle-label input[type="checkbox"]:checked::after {
+    transform: translateX(16px);
+}
+
+/* ---------- Camera Toggle Button ---------- */
+.vct-cam-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    display: none;
+}
+
+.vct-cam-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+}
+
+.vct-cam-btn:active {
+    transform: scale(0.9);
+}
+
+/* ---------- Devices Panel (iOS Sheet) ---------- */
+.vct-devices-panel {
+    display: none;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    margin-top: 4px;
+    backdrop-filter: blur(20px);
+}
+
+.vct-device-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.vct-device-row:last-child {
+    margin-bottom: 16px;
+}
+
+.vct-device-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 80px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.vct-device-row select {
+    flex: 1;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+.vct-device-row select:focus {
+    border-color: var(--primary);
+    background: rgba(0, 122, 255, 0.06);
+}
+
+.vct-device-row select option {
+    background: #1C1C1E;
+    color: #fff;
+}
+
+/* ---------- Keypad (DTMF) ---------- */
+.vct-keypad {
+    display: none;
+    margin-top: 8px;
+    width: 100%;
+}
+
+#c2c_keypad_table {
+    margin: 0 auto;
+    border-collapse: separate;
+    border-spacing: 10px;
+}
+
+#c2c_keypad_table td {
+    width: 60px;
+    height: 52px;
+    text-align: center;
+    vertical-align: middle;
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#c2c_keypad_table td:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+#c2c_keypad_table td:active {
+    background: rgba(0, 122, 255, 0.15);
+    border-color: var(--primary);
+    transform: scale(0.9);
+}
+
+/* ---------- iOS 17 Modal Sheet ---------- */
+.vct-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: modalFade 0.3s ease-out;
+}
+
+@keyframes modalFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.vct-modal-content {
+    background: rgba(28, 28, 30, 0.92);
+    backdrop-filter: blur(60px) saturate(1.4);
+    -webkit-backdrop-filter: blur(60px) saturate(1.4);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    width: 100%;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlide 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes modalSlide {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+/* Modal drag handle */
+.vct-modal-content::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    margin: 10px auto 6px;
+}
+
+.vct-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 22px 8px;
+}
+
+.vct-modal-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+.vct-modal-header .vct-icon-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.2s;
+}
+
+.vct-modal-header .vct-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.vct-modal-body {
+    padding: 12px 22px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vct-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vct-field > span {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary-light);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.vct-field input[type="text"],
+.vct-field select {
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.vct-field input[type="text"]:focus,
+.vct-field select:focus {
+    border-color: var(--primary);
+    background: rgba(108, 99, 255, 0.06);
+}
+
+.vct-field input[type="text"]::placeholder {
+    color: var(--text-tertiary);
+}
+
+.vct-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+.vct-field select option {
+    background: #1a1a2e;
+    color: #fff;
+}
+
+/* Checkbox fields in modal */
+.vct-field-checkbox {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.vct-field-checkbox > span {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.vct-field-checkbox input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 36px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    flex-shrink: 0;
+}
+
+.vct-field-checkbox input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.vct-field-checkbox input[type="checkbox"]:checked {
+    background: var(--primary);
+}
+
+.vct-field-checkbox input[type="checkbox"]:checked::after {
+    transform: translateX(14px);
+}
+
+.vct-modal-footer {
+    padding: 14px 22px 22px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.vct-btn {
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 24px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.vct-btn:active {
+    transform: scale(0.97);
+}
+
+.vct-btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    width: 100%;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px rgba(108, 99, 255, 0.25);
+}
+
+.vct-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(108, 99, 255, 0.35);
+}
+
+.vct-btn-primary:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ---------- Custom Scrollbar ---------- */
+.vct-modal-content::-webkit-scrollbar {
+    width: 3px;
+}
+.vct-modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+.vct-modal-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+/* ---------- Utility Classes ---------- */
+.vct-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    margin: 4px 0;
+}
+
+/* ============================================
+   Device Test Panel (Mic / Speaker / Camera)
+   ============================================ */
+.vct-device-test {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    animation: deviceTestSlide 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes deviceTestSlide {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 600px; }
+}
+
+.vct-device-test-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.vct-device-test-header span {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.vct-device-test-close {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: var(--text-secondary);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.vct-device-test-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+}
+
+.vct-device-test-body {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.vct-device-test-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vct-device-test-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary-light);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.vct-device-test-camera-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #000;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+}
+
+.vct-device-test-camera-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.vct-device-test-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.vct-device-test-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: flex-start;
+}
+
+.vct-device-test-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--glass-border-hover);
+    color: var(--text-primary);
+}
+
+.vct-device-test-btn:active {
+    transform: scale(0.96);
+}
+
+.vct-device-test-btn.active {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(255, 59, 48, 0.1);
+}
+
+.vct-device-test-btn.success {
+    border-color: var(--success);
+    color: var(--success);
+    background: rgba(52, 199, 89, 0.1);
+}
+
+/* Mic level meter */
+.vct-device-test-meter-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vct-device-test-meter-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+}
+
+.vct-device-test-meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--success), var(--warning), var(--danger));
+    transition: width 0.1s ease;
+    width: 0%;
+}
+
+.vct-device-test-meter-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 45px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Speaker test result */
+.vct-device-test-speaker-result {
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-height: 18px;
+}
+
+.vct-device-test-speaker-result .check {
+    color: var(--success);
+    font-weight: 700;
+}
+
+.vct-device-test-speaker-result .cross {
+    color: var(--danger);
+    font-weight: 700;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 420px) {
+    .vct-phone-frame {
+        border-radius: var(--radius-lg);
+        padding: 20px 16px 24px;
+    }
+    
+    .vct-call-btn.ready,
+    .vct-call-btn.calling {
+        width: 160px;
+        height: 56px;
+        font-size: 16px;
+    }
+    
+    .vct-call-btn.hangup {
+        width: 64px;
+        height: 64px;
+    }
+    
+    body {
+        padding: 12px;
+    }
+}
+
+/* ============================================
+   Device Test Panel (iOS 17 Style)
+   ============================================ */
+.vct-device-test {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    animation: deviceTestSlide 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes deviceTestSlide {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 600px; }
+}
+
+.vct-device-test-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vct-device-test-header span {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.vct-device-test-close {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: var(--text-secondary);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.vct-device-test-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.vct-device-test-body {
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.vct-device-test-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vct-device-test-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary-light);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.vct-device-test-camera-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #000;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vct-device-test-camera-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.vct-device-test-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.vct-device-test-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: flex-start;
+}
+
+.vct-device-test-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+}
+
+.vct-device-test-btn:active {
+    transform: scale(0.96);
+}
+
+.vct-device-test-btn.active {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(255, 69, 58, 0.1);
+}
+
+.vct-device-test-btn.success {
+    border-color: var(--success);
+    color: var(--success);
+    background: rgba(52, 199, 89, 0.1);
+}
+
+/* Mic level meter */
+.vct-device-test-meter-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vct-device-test-meter-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vct-device-test-meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--success), var(--warning), var(--danger));
+    transition: width 0.1s ease;
+    width: 0%;
+}
+
+.vct-device-test-meter-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 48px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Speaker test result */
+.vct-device-test-speaker-result {
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-height: 18px;
+}
+
+.vct-device-test-speaker-result .check {
+    color: var(--success);
+    font-weight: 700;
+}
+
+.vct-device-test-speaker-result .cross {
+    color: var(--danger);
+    font-weight: 700;
+}
+
+/* ============================================
+   Debug Panel (in-page)
+   ============================================ */
+.vct-debug-panel {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-top: 8px;
+    animation: debugSlide 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+@keyframes debugSlide {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 400px; }
+}
+
+.vct-debug-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vct-debug-header span {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vct-debug-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: var(--text-secondary);
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+
+.vct-debug-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+}
+
+.vct-debug-log {
+    padding: 8px 12px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.vct-debug-log .log-entry {
+    white-space: pre-wrap;
+    word-break: break-all;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 1px 0;
+}
+
+.vct-debug-log .log-entry .log-info { color: var(--text-secondary); }
+.vct-debug-log .log-entry .log-warn { color: var(--warning); }
+.vct-debug-log .log-entry .log-error { color: var(--danger); }
+.vct-debug-log .log-entry .log-success { color: var(--success); }
+.vct-debug-log .log-entry .log-debug { color: var(--primary-light); }
+
+.vct-debug-footer {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.vct-debug-footer .status-ok { color: var(--success); }
+.vct-debug-footer .status-error { color: var(--danger); }
+.vct-debug-footer .status-warn { color: var(--warning); }
+
+.vct-debug-log::-webkit-scrollbar { width: 3px; }
+.vct-debug-log::-webkit-scrollbar-track { background: transparent; }
+.vct-debug-log::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 420px) {
+    .vct-phone-frame {
+        border-radius: 36px;
+        padding: 24px 18px 28px;
+    }
+
+    .vct-phone-frame::after {
+        width: 100px;
+        height: 28px;
+    }
+
+    .vct-call-btn.ready,
+    .vct-call-btn.calling {
+        width: 170px;
+        height: 60px;
+        font-size: 17px;
+    }
+
+    .vct-call-btn.hangup {
+        width: 68px;
+        height: 68px;
+    }
+
+    body {
+        padding: 12px;
+    }
+}

@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# AudioCodes proprietary SDK (download from AudioCodes support portal)
+js/ac_webrtc.min.js
+
+# AudioCodes proprietary documentation
+docs/
+
+# Proprietary/protected assets
+html/logo-audio-codes.svg
+html/logo-voice-cxteams.svg
+html/favicon.png
+
+# Environment files
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp
+tmp/
+temp/
