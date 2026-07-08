@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
+const BIND_ADDR = process.env.BIND_ADDR || '127.0.0.1'; // Set BIND_ADDR=0.0.0.0 for Render/cloud
 
 const MIME_TYPES = new Map([
     ['.html', 'text/html; charset=utf-8'],
@@ -121,11 +122,12 @@ const server = http.createServer((req, res) => {
     });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, BIND_ADDR, () => {
+    const displayAddr = BIND_ADDR === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
     console.log('╔══════════════════════════════════════════╗');
     console.log('║     Voice Team - Dev Server            ║');
     console.log('╠══════════════════════════════════════════╣');
-    console.log(`║  Local:   http://127.0.0.1:${PORT}        ║`);
+    console.log(`║  Local:   http://${displayAddr}:${PORT}        ║`);
     console.log('║                                          ║');
     console.log('║  ⚠  DEVELOPMENT SERVER ONLY              ║');
     console.log('║  ⚠  Do not expose to the internet        ║');

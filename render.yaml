@@ -11,6 +11,8 @@ services:
     envVars:
       - key: PORT
         value: 10000
+      - key: BIND_ADDR
+        value: 0.0.0.0
     headers:
       - path: /*
         name: X-Content-Type-Options
