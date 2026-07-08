@@ -1,9 +1,6 @@
 # Dependencies
 node_modules/
 
-# AudioCodes proprietary SDK (download from AudioCodes support portal)
-js/ac_webrtc.min.js
-
 # AudioCodes proprietary documentation
 docs/
 
