@@ -725,6 +725,8 @@ function extractOidcAttributes(userInfo) {
 
 /**
  * Handle GET /api/auth/login — redirect to OIDC provider (Okta) login
+ */
+function handleOidcLogin(req, res) {
     if (!OIDC_ENABLED) {
         res.writeHead(400, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
         res.end('OIDC (Okta) is not configured. Set OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET.');
@@ -972,10 +974,9 @@ const server = http.createServer((req, res) => {
     // Remove query strings (not needed for static file serving)
     reqPath = reqPath.split('?')[0].split('#')[0];
 
-    // Auth check: redirect to login when authentication is configured
+    // Auth check: always redirect to login when not authenticated
     const isMainWidget = reqPath === '/html/index.html';
-    const authConfigured = OIDC_ENABLED || !!(process.env.LDAP_URL);
-    if (isMainWidget && authConfigured) {
+    if (isMainWidget) {
         const cookies = parseCookies(req);
         const token = cookies['c2c_session'];
         const isAuthenticated = token && SESSIONS.has(token) && SESSIONS.get(token).expires > Date.now();
@@ -1024,16 +1025,8 @@ const server = http.createServer((req, res) => {
             }
             return;
         }
-
-        // Inject server-side auth state into login.html (no client-side fetch needed)
-        let responseData = data;
-        if (ext === '.html' && resolvedPath.endsWith('login.html')) {
-            const authScript = '<script>window._oidcEnabled=' + OIDC_ENABLED + ';window._ldapEnabled=' + (!!process.env.LDAP_URL) + ';</script>';
-            responseData = Buffer.from(data.toString('utf8').replace('<!--SERVER_AUTH_STATE-->', authScript));
-        }
-
         res.writeHead(200, { 'Content-Type': contentType, ...SECURITY_HEADERS });
-        res.end(responseData);
+        res.end(data);
     });
 });
 

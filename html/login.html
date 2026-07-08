@@ -234,8 +234,8 @@
                 </span>
             </button>
 
-            <!-- Auth0 / SSO divider (shown when OIDC is configured) -->
-            <div id="auth0Section" style="display:none;margin-top:6px;">
+            <!-- Auth0 / SSO divider (always visible) -->
+            <div id="auth0Section" style="display:block;margin-top:6px;">
                 <div style="display:flex;align-items:center;gap:12px;margin:12px 0;">
                     <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
                     <span style="font-size:11px;color:var(--text-tertiary);letter-spacing:1px;text-transform:uppercase;">or continue with SSO</span>
@@ -257,7 +257,6 @@
         </div>
     </div>
 
-    <!--SERVER_AUTH_STATE-->
     <script>
         (function() {
             const form = document.getElementById('loginForm');
@@ -279,12 +278,8 @@
                 })
                 .catch(() => {});
 
-            // Check if OIDC (Okta/Auth0) is configured — use server-injected state
-            // window._oidcEnabled and window._ldapEnabled are injected by server.js
-            if (window._oidcEnabled || window._ldapEnabled) {
-                var s = document.getElementById('auth0Section');
-                if (s) s.style.display = 'block';
-            }
+            // Auth0 SSO button always visible. Server handles OIDC check.
+            // If OIDC is not configured, /api/auth/login shows a friendly message.
 
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
