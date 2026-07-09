@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Team - Admin Configuration</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#111;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.container{width:100%;max-width:560px}
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;margin-bottom:16px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px;text-align:center}
+p.sub{color:#888;font-size:13px;text-align:center;margin-bottom:24px}
+h2{font-size:15px;font-weight:600;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06);color:#FF9F0A}
+.form-group{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:600;color:#999;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+input,textarea{width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;font-family:inherit;outline:none;transition:border 0.2s}
+input:focus,textarea:focus{border-color:#409CFF}
+input::placeholder{color:#555}
+textarea{resize:vertical;min-height:50px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:12px}
+.btn-row{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.btn{flex:1;padding:12px 20px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.2s;font-family:inherit;min-width:120px;text-align:center}
+.btn:hover{opacity:0.85}
+.btn-primary{background:#007AFF;color:#fff}
+.btn-danger{background:#FF3B30;color:#fff}
+.btn-secondary{background:rgba(255,255,255,0.1);color:#fff}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.status{text-align:center;padding:10px;border-radius:8px;font-size:13px;margin-top:16px;display:none}
+.status.success{display:block;background:rgba(52,199,89,0.15);color:#34C759;border:1px solid rgba(52,199,89,0.3)}
+.status.error{display:block;background:rgba(255,59,48,0.15);color:#FF453A;border:1px solid rgba(255,59,48,0.3)}
+.status.info{display:block;background:rgba(64,156,255,0.15);color:#409CFF;border:1px solid rgba(64,156,255,0.3)}
+#loginForm{display:block}
+#configForm{display:none}
+.tab{display:flex;gap:0;margin-bottom:20px;background:rgba(255,255,255,0.04);border-radius:10px;padding:3px}
+.tab button{flex:1;padding:8px;border:none;background:transparent;color:#888;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px;transition:all 0.2s;font-family:inherit}
+.tab button.active{background:#007AFF;color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.footer{text-align:center;margin-top:16px;font-size:12px;color:#555}
+.footer a{color:#409CFF;text-decoration:none}
+.footer a:hover{text-decoration:underline}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:6px}
+.badge.on{background:rgba(52,199,89,0.2);color:#34C759}
+.badge.off{background:rgba(255,59,48,0.2);color:#FF453A}
+.status-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+.status-row:last-child{border-bottom:none}
+.status-row .label{color:#999}
+.status-row .value{color:#fff;font-family:monospace;font-size:12px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>🔐 Admin Configuration</h1>
+        <p class="sub">Configure SSO (Okta/LDAP) settings.<br>Data is encrypted with AES-256-GCM before saving.</p>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <div class="form-group">
+                <label>Admin Password</label>
+                <input type="password" id="adminPassword" placeholder="Enter ADMIN_CONFIG_PASSWORD" autocomplete="current-password">
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="loginBtn" onclick="adminLogin()">Unlock Configuration</button>
+            </div>
+            <div class="status" id="loginStatus"></div>
+        </div>
+
+        <!-- Config Form -->
+        <div id="configForm">
+            <!-- Tabs -->
+            <div class="tab">
+                <button class="active" onclick="switchTab('oidc',this)">Okta / OIDC</button>
+                <button onclick="switchTab('ldap',this)">LDAP / AD</button>
+            </div>
+
+            <!-- OIDC Tab -->
+            <div class="tab-content active" id="tab-oidc">
+                <h2>Okta / OIDC Settings</h2>
+                <div class="form-group">
+                    <label>OIDC_ISSUER</label>
+                    <input type="text" id="f_OIDC_ISSUER" placeholder="https://dev-XXXXXX.okta.com">
+                </div>
+                <div class="form-group">
+                    <label>OIDC_CLIENT_ID</label>
+                    <input type="text" id="f_OIDC_CLIENT_ID" placeholder="0oaXXXXXXXXXXXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label>OIDC_CLIENT_SECRET</label>
+                    <input type="password" id="f_OIDC_CLIENT_SECRET" placeholder="Client secret">
+                </div>
+                <div class="form-group">
+                    <label>OIDC_CALLBACK_URL (optional)</label>
+                    <input type="text" id="f_OIDC_CALLBACK_URL" placeholder="https://your-app.onrender.com/api/auth/callback">
+                </div>
+                <div class="form-group">
+                    <label>OIDC_SCOPE (optional)</label>
+                    <input type="text" id="f_OIDC_SCOPE" placeholder="openid profile email">
+                </div>
+            </div>
+
+            <!-- LDAP Tab -->
+            <div class="tab-content" id="tab-ldap">
+                <h2>LDAP / AD Settings</h2>
+                <div class="form-group">
+                    <label>LDAP_URL</label>
+                    <input type="text" id="f_LDAP_URL" placeholder="ldap://ldap.example.com:389">
+                </div>
+                <div class="form-group">
+                    <label>LDAP_BASE_DN</label>
+                    <input type="text" id="f_LDAP_BASE_DN" placeholder="dc=example,dc=com">
+                </div>
+                <div class="form-group">
+                    <label>LDAP_BIND_DN (optional)</label>
+                    <input type="text" id="f_LDAP_BIND_DN" placeholder="cn=admin,dc=example,dc=com">
+                </div>
+                <div class="form-group">
+                    <label>LDAP_BIND_PASSWORD (optional)</label>
+                    <input type="password" id="f_LDAP_BIND_PASSWORD" placeholder="Bind password">
+                </div>
+                <div class="form-group">
+                    <label>LDAP_SEARCH_FILTER (optional)</label>
+                    <input type="text" id="f_LDAP_SEARCH_FILTER" placeholder="(uid={{username}})">
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="saveBtn" onclick="saveConfig()">💾 Save & Encrypt</button>
+                <button class="btn btn-secondary" id="refreshBtn" onclick="loadConfig()">🔄 Refresh</button>
+                <button class="btn btn-danger" id="deleteBtn" onclick="deleteConfig()">🗑 Delete</button>
+            </div>
+            <div class="status" id="configStatus"></div>
+
+            <!-- Current Status -->
+            <div style="margin-top:20px;background:rgba(255,255,255,0.02);border-radius:8px;padding:16px">
+                <h2>📊 Current Status</h2>
+                <div id="statusDisplay">
+                    <div class="status-row"><span class="label">OIDC Enabled</span><span class="value" id="s_oidcEnabled">-</span></div>
+                    <div class="status-row"><span class="label">OIDC Issuer</span><span class="value" id="s_OIDC_ISSUER">-</span></div>
+                    <div class="status-row"><span class="label">OIDC Client ID</span><span class="value" id="s_OIDC_CLIENT_ID">-</span></div>
+                    <div class="status-row"><span class="label">OIDC Client Secret</span><span class="value" id="s_OIDC_CLIENT_SECRET">-</span></div>
+                    <div class="status-row"><span class="label">LDAP URL</span><span class="value" id="s_LDAP_URL">-</span></div>
+                    <div class="status-row"><span class="label">LDAP Base DN</span><span class="value" id="s_LDAP_BASE_DN">-</span></div>
+                    <div class="status-row"><span class="label">Encrypted Config File</span><span class="value" id="s_encryptedFile">-</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <a href="/html/login.html">← Back to Login</a> &bull; Powered by Voice Team
+    </div>
+</div>
+
+<script>
+let adminToken = '';
+
+function showStatus(elemId, msg, type) {
+    const el = document.getElementById(elemId);
+    el.textContent = msg;
+    el.className = 'status ' + type;
+    if (type) el.style.display = 'block';
+}
+
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    btn.classList.add('active');
+}
+
+async function adminLogin() {
+    const password = document.getElementById('adminPassword').value;
+    if (!password) return showStatus('loginStatus', 'Please enter the admin password', 'error');
+    showStatus('loginStatus', 'Verifying...', 'info');
+    try {
+        const r = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+        const data = await r.json();
+        if (!data.success) return showStatus('loginStatus', data.error || 'Login failed', 'error');
+        adminToken = data.token;
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('configForm').style.display = 'block';
+        showStatus('configStatus', '', '');
+        // Populate config
+        if (data.config) renderConfig(data.config);
+    } catch(e) {
+        showStatus('loginStatus', 'Network error: ' + e.message, 'error');
+    }
+}
+
+async function loadConfig() {
+    showStatus('configStatus', 'Loading...', 'info');
+    try {
+        const r = await fetch('/api/admin/config', {
+            headers: { 'Authorization': 'Bearer ' + adminToken }
+        });
+        const data = await r.json();
+        if (!data.success) return showStatus('configStatus', data.error || 'Failed to load', 'error');
+        renderConfig(data.config);
+        showStatus('configStatus', 'Config loaded', 'success');
+    } catch(e) {
+        showStatus('configStatus', 'Error: ' + e.message, 'error');
+    }
+}
+
+function renderConfig(config) {
+    // Update status display
+    const oidcEnabled = !!(config.oidc && config.oidc.OIDC_ISSUER);
+    document.getElementById('s_oidcEnabled').innerHTML = oidcEnabled ? '<span class="badge on">ON</span>' : '<span class="badge off">OFF</span>';
+    document.getElementById('s_OIDC_ISSUER').textContent = config.oidc?.OIDC_ISSUER || '-';
+    document.getElementById('s_OIDC_CLIENT_ID').textContent = config.oidc?.OIDC_CLIENT_ID || '-';
+    document.getElementById('s_OIDC_CLIENT_SECRET').textContent = config.oidc?.OIDC_CLIENT_SECRET || '-';
+    document.getElementById('s_LDAP_URL').textContent = config.ldap?.LDAP_URL || '-';
+    document.getElementById('s_LDAP_BASE_DN').textContent = config.ldap?.LDAP_BASE_DN || '-';
+    document.getElementById('s_encryptedFile').textContent = config.encryptedConfigExists ? '✅ Present' : '❌ Not found';
+
+    // Pre-fill form fields
+    setField('OIDC_ISSUER', config.oidc?.OIDC_ISSUER || '');
+    setField('OIDC_CLIENT_ID', config.oidc?.OIDC_CLIENT_ID || '');
+    setField('OIDC_CLIENT_SECRET', config.oidc?.OIDC_CLIENT_SECRET || '');
+    setField('OIDC_CALLBACK_URL', config.oidc?.OIDC_CALLBACK_URL || '');
+    setField('OIDC_SCOPE', config.oidc?.OIDC_SCOPE || '');
+    setField('LDAP_URL', config.ldap?.LDAP_URL || '');
+    setField('LDAP_BASE_DN', config.ldap?.LDAP_BASE_DN || '');
+    setField('LDAP_BIND_DN', config.ldap?.LDAP_BIND_DN || '');
+    setField('LDAP_BIND_PASSWORD', config.ldap?.LDAP_BIND_PASSWORD || '');
+    setField('LDAP_SEARCH_FILTER', config.ldap?.LDAP_SEARCH_FILTER || '');
+}
+
+function setField(name, val) {
+    const el = document.getElementById('f_' + name);
+    if (el) el.value = val;
+}
+
+function getField(name) {
+    const el = document.getElementById('f_' + name);
+    return el ? el.value.trim() : '';
+}
+
+async function saveConfig() {
+    showStatus('configStatus', 'Encrypting and saving...', 'info');
+    const oidc = {};
+    const ldap = {};
+
+    const oidcIssuer = getField('OIDC_ISSUER');
+    const oidcClientId = getField('OIDC_CLIENT_ID');
+    const oidcClientSecret = getField('OIDC_CLIENT_SECRET');
+
+    if (oidcIssuer || oidcClientId || oidcClientSecret) {
+        if (!oidcIssuer) return showStatus('configStatus', 'OIDC_ISSUER is required when configuring OIDC', 'error');
+        if (!oidcClientId) return showStatus('configStatus', 'OIDC_CLIENT_ID is required when configuring OIDC', 'error');
+        if (!oidcClientSecret) return showStatus('configStatus', 'OIDC_CLIENT_SECRET is required when configuring OIDC', 'error');
+        oidc.OIDC_ISSUER = oidcIssuer;
+        oidc.OIDC_CLIENT_ID = oidcClientId;
+        oidc.OIDC_CLIENT_SECRET = oidcClientSecret;
+        const cb = getField('OIDC_CALLBACK_URL');
+        if (cb) oidc.OIDC_CALLBACK_URL = cb;
+        const scope = getField('OIDC_SCOPE');
+        if (scope) oidc.OIDC_SCOPE = scope;
+    }
+
+    const ldapUrl = getField('LDAP_URL');
+    if (ldapUrl) {
+        ldap.LDAP_URL = ldapUrl;
+        const baseDn = getField('LDAP_BASE_DN');
+        if (baseDn) ldap.LDAP_BASE_DN = baseDn;
+        const bindDn = getField('LDAP_BIND_DN');
+        if (bindDn) ldap.LDAP_BIND_DN = bindDn;
+        const bindPw = getField('LDAP_BIND_PASSWORD');
+        if (bindPw) ldap.LDAP_BIND_PASSWORD = bindPw;
+        const filter = getField('LDAP_SEARCH_FILTER');
+        if (filter) ldap.LDAP_SEARCH_FILTER = filter;
+    }
+
+    if (Object.keys(oidc).length === 0 && Object.keys(ldap).length === 0) {
+        return showStatus('configStatus', 'Fill in at least one field', 'error');
+    }
+
+    try {
+        const r = await fetch('/api/admin/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + adminToken
+            },
+            body: JSON.stringify({ oidc: Object.keys(oidc).length ? oidc : undefined, ldap: Object.keys(ldap).length ? ldap : undefined })
+        });
+        const data = await r.json();
+        if (!data.success) return showStatus('configStatus', data.error || 'Save failed', 'error');
+        renderConfig(data.config);
+        showStatus('configStatus', '✅ Configuration encrypted and saved! Restart server to apply.', 'success');
+    } catch(e) {
+        showStatus('configStatus', 'Error: ' + e.message, 'error');
+    }
+}
+
+async function deleteConfig() {
+    if (!confirm('Delete encrypted config file? This will remove all saved SSO settings.')) return;
+    showStatus('configStatus', 'Deleting...', 'info');
+    try {
+        const r = await fetch('/api/admin/config', {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + adminToken }
+        });
+        const data = await r.json();
+        if (!data.success) return showStatus('configStatus', data.error || 'Delete failed', 'error');
+        showStatus('configStatus', '✅ Encrypted config deleted', 'success');
+        renderConfig({ oidc: {}, ldap: {}, encryptedConfigExists: false });
+    } catch(e) {
+        showStatus('configStatus', 'Error: ' + e.message, 'error');
+    }
+}
+</script>
+</body>
+</html>

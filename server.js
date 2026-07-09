@@ -92,6 +92,140 @@ function isRateLimited(ip) {
 }
 
 // ──────────────────────────────────────────────
+// Encrypted SSO Configuration (AES-256-GCM)
+// ──────────────────────────────────────────────
+
+const SSO_CONFIG_FILE = path.join(__dirname, 'conf', 'sso_config.enc');
+const ADMIN_CONFIG_PASSWORD = process.env.ADMIN_CONFIG_PASSWORD || '';
+
+/**
+ * Derive a 256-bit key from the admin password using PBKDF2.
+ */
+function deriveKey(password, salt) {
+    return crypto.pbkdf2Sync(password, salt, 100000, 32, 'sha512');
+}
+
+/**
+ * Encrypt an object to a base64 string using AES-256-GCM.
+ * Returns format: salt:iv:tag:ciphertext (all base64-encoded)
+ */
+function encryptConfig(obj, password) {
+    if (!password) throw new Error('ADMIN_CONFIG_PASSWORD not set');
+    const salt = crypto.randomBytes(16);
+    const key = deriveKey(password, salt);
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    const json = JSON.stringify(obj);
+    let encrypted = cipher.update(json, 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    const tag = cipher.getAuthTag();
+    return salt.toString('base64') + ':' + iv.toString('base64') + ':' + tag.toString('base64') + ':' + encrypted;
+}
+
+/**
+ * Decrypt a base64 string (salt:iv:tag:ciphertext) back to an object using AES-256-GCM.
+ */
+function decryptConfig(payload, password) {
+    if (!password) throw new Error('ADMIN_CONFIG_PASSWORD not set');
+    const parts = payload.split(':');
+    if (parts.length !== 4) throw new Error('Invalid encrypted payload format');
+    const salt = Buffer.from(parts[0], 'base64');
+    const iv = Buffer.from(parts[1], 'base64');
+    const tag = Buffer.from(parts[2], 'base64');
+    const encrypted = parts[3];
+    const key = deriveKey(password, salt);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(tag);
+    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return JSON.parse(decrypted);
+}
+
+/**
+ * Load encrypted config from disk and merge into process.env.
+ * Returns true if config was loaded, false if no file exists.
+ */
+function loadEncryptedConfig() {
+    if (!ADMIN_CONFIG_PASSWORD) return false;
+    if (!fs.existsSync(SSO_CONFIG_FILE)) return false;
+    try {
+        const payload = fs.readFileSync(SSO_CONFIG_FILE, 'utf8').trim();
+        if (!payload) return false;
+        const config = decryptConfig(payload, ADMIN_CONFIG_PASSWORD);
+
+        // Merge OIDC settings (only if not already set by environment variables)
+        const oidcFields = ['OIDC_ISSUER', 'OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET',
+            'OIDC_CALLBACK_URL', 'OIDC_AUTHZ_ENDPOINT', 'OIDC_TOKEN_ENDPOINT',
+            'OIDC_USERINFO_ENDPOINT', 'OIDC_JWKS_ENDPOINT', 'OIDC_SCOPE',
+            'OIDC_ATTR_DOMAIN', 'OIDC_ATTR_ADDRESSES', 'OIDC_ATTR_CALL',
+            'OIDC_ATTR_CALLER', 'OIDC_ATTR_CALLER_DN'];
+        const ldapFields = ['LDAP_URL', 'LDAP_BASE_DN', 'LDAP_BIND_DN',
+            'LDAP_BIND_PASSWORD', 'LDAP_SEARCH_FILTER',
+            'LDAP_ATTR_DOMAIN', 'LDAP_ATTR_ADDRESSES', 'LDAP_ATTR_CALL',
+            'LDAP_ATTR_CALLER', 'LDAP_ATTR_CALLER_DN'];
+
+        if (config.oidc && typeof config.oidc === 'object') {
+            for (const key of oidcFields) {
+                if (config.oidc[key] !== undefined && !process.env[key]) {
+                    process.env[key] = String(config.oidc[key]);
+                }
+            }
+        }
+        if (config.ldap && typeof config.ldap === 'object') {
+            for (const key of ldapFields) {
+                if (config.ldap[key] !== undefined && !process.env[key]) {
+                    process.env[key] = String(config.ldap[key]);
+                }
+            }
+        }
+        console.log('  ├  Encrypted SSO config loaded successfully');
+        return true;
+    } catch (e) {
+        console.error('  ╰  Failed to load encrypted SSO config:', e.message);
+        return false;
+    }
+}
+
+/**
+ * Save config object to encrypted file on disk.
+ */
+function saveEncryptedConfig(configObj) {
+    if (!ADMIN_CONFIG_PASSWORD) throw new Error('ADMIN_CONFIG_PASSWORD not set');
+    const encrypted = encryptConfig(configObj, ADMIN_CONFIG_PASSWORD);
+    fs.writeFileSync(SSO_CONFIG_FILE, encrypted, 'utf8');
+}
+
+/**
+ * Mask secret values for safe display (show only first/last 4 chars).
+ */
+function maskSecret(val) {
+    if (!val || typeof val !== 'string') return '';
+    if (val.length <= 8) return val.slice(0, 2) + '****' + val.slice(-2);
+    return val.slice(0, 4) + '****' + val.slice(-4);
+}
+
+/**
+ * Build the admin-readable config summary (secrets masked).
+ */
+function getAdminConfigSummary() {
+    return {
+        oidc: {
+            OIDC_ISSUER: process.env.OIDC_ISSUER || '',
+            OIDC_CLIENT_ID: process.env.OIDC_CLIENT_ID ? maskSecret(process.env.OIDC_CLIENT_ID) : '',
+            OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET ? maskSecret(process.env.OIDC_CLIENT_SECRET) : '',
+            OIDC_CALLBACK_URL: process.env.OIDC_CALLBACK_URL || '',
+        },
+        ldap: {
+            LDAP_URL: process.env.LDAP_URL || '',
+            LDAP_BASE_DN: process.env.LDAP_BASE_DN || '',
+            LDAP_BIND_DN: process.env.LDAP_BIND_DN || '',
+            LDAP_BIND_PASSWORD: process.env.LDAP_BIND_PASSWORD ? maskSecret(process.env.LDAP_BIND_PASSWORD) : '',
+        },
+        encryptedConfigExists: fs.existsSync(SSO_CONFIG_FILE)
+    };
+}
+
+// ──────────────────────────────────────────────
 // Session & Authentication
 // ──────────────────────────────────────────────
 
@@ -724,6 +858,125 @@ function extractOidcAttributes(userInfo) {
 }
 
 /**
+ * ── Admin: Verify admin password from POST body or header ──
+ */
+function verifyAdminAuth(req) {
+    if (!ADMIN_CONFIG_PASSWORD) return false;
+    // Check Authorization header (Bearer token = password)
+    const authHeader = req.headers['authorization'] || '';
+    if (authHeader.startsWith('Bearer ')) {
+        return authHeader.slice(7) === ADMIN_CONFIG_PASSWORD;
+    }
+    return false;
+}
+
+/**
+ * Handle POST /api/admin/login — verify admin password, return admin token
+ */
+function handleAdminLogin(req, res) {
+    if (!ADMIN_CONFIG_PASSWORD) {
+        return jsonResponse(res, 400, { success: false, error: 'ADMIN_CONFIG_PASSWORD not set on server' });
+    }
+    parseJsonBody(req).then(({ password }) => {
+        if (!password || password !== ADMIN_CONFIG_PASSWORD) {
+            return jsonResponse(res, 401, { success: false, error: 'Invalid admin password' });
+        }
+        // Generate a short-lived admin session token
+        const token = crypto.randomBytes(32).toString('hex');
+        SESSIONS.set(`admin_${token}`, {
+            user: 'admin',
+            attributes: {},
+            expires: Date.now() + 3600000 // 1 hour
+        });
+        jsonResponse(res, 200, {
+            success: true,
+            token: token,
+            config: getAdminConfigSummary()
+        });
+    }).catch(e => {
+        jsonResponse(res, 400, { success: false, error: e.message });
+    });
+}
+
+/**
+ * Handle GET /api/admin/config — return current config summary (masked secrets)
+ */
+function handleAdminGetConfig(req, res) {
+    // Check admin session token
+    const cookies = parseCookies(req);
+    const token = cookies['c2c_admin'] || '';
+    const session = SESSIONS.get(`admin_${token}`);
+    if (!session || session.expires < Date.now()) {
+        // Also allow Bearer token
+        if (!verifyAdminAuth(req)) {
+            return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
+        }
+    }
+    jsonResponse(res, 200, { success: true, config: getAdminConfigSummary() });
+}
+
+/**
+ * Handle POST /api/admin/config — save encrypted SSO config
+ */
+function handleAdminSaveConfig(req, res) {
+    // Check admin session token
+    const cookies = parseCookies(req);
+    const token = cookies['c2c_admin'] || '';
+    const session = SESSIONS.get(`admin_${token}`);
+    if (!session || session.expires < Date.now()) {
+        if (!verifyAdminAuth(req)) {
+            return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
+        }
+    }
+
+    parseJsonBody(req).then(({ oidc, ldap }) => {
+        if (!oidc && !ldap) {
+            return jsonResponse(res, 400, { success: false, error: 'Provide oidc and/or ldap config' });
+        }
+
+        // Validate OIDC fields
+        if (oidc) {
+            if (oidc.OIDC_ISSUER && !/^https:\/\//.test(oidc.OIDC_ISSUER)) {
+                return jsonResponse(res, 400, { success: false, error: 'OIDC_ISSUER must start with https://' });
+            }
+        }
+
+        // Build config object
+        const configObj = {};
+        if (oidc) configObj.oidc = oidc;
+        if (ldap) configObj.ldap = ldap;
+
+        saveEncryptedConfig(configObj);
+        jsonResponse(res, 200, { success: true, config: getAdminConfigSummary() });
+    }).catch(e => {
+        jsonResponse(res, 400, { success: false, error: e.message });
+    });
+}
+
+/**
+ * Handle DELETE /api/admin/config — delete encrypted config file
+ */
+function handleAdminDeleteConfig(req, res) {
+    const cookies = parseCookies(req);
+    const token = cookies['c2c_admin'] || '';
+    const session = SESSIONS.get(`admin_${token}`);
+    if (!session || session.expires < Date.now()) {
+        if (!verifyAdminAuth(req)) {
+            return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
+        }
+    }
+
+    try {
+        if (fs.existsSync(SSO_CONFIG_FILE)) {
+            fs.unlinkSync(SSO_CONFIG_FILE);
+        }
+        jsonResponse(res, 200, { success: true, message: 'Encrypted config deleted' });
+    } catch (e) {
+        jsonResponse(res, 500, { success: false, error: e.message });
+    }
+}
+
+/**
  * Handle GET /api/auth/login — redirect to OIDC provider (Okta) login
  */
 function handleOidcLogin(req, res) {
@@ -964,6 +1217,20 @@ const server = http.createServer((req, res) => {
         return handleGetConfig(req, res);
     }
 
+    // ── Admin API Routes (encrypted config management) ──
+    if (req.url === '/api/admin/login' && req.method === 'POST') {
+        return handleAdminLogin(req, res);
+    }
+    if (req.url === '/api/admin/config' && req.method === 'GET') {
+        return handleAdminGetConfig(req, res);
+    }
+    if (req.url === '/api/admin/config' && req.method === 'POST') {
+        return handleAdminSaveConfig(req, res);
+    }
+    if (req.url === '/api/admin/config' && req.method === 'DELETE') {
+        return handleAdminDeleteConfig(req, res);
+    }
+
     // ── OIDC (Okta/Auth0) OAuth Routes ────────────────
     if (req.url === '/api/auth/status' && req.method === 'GET') {
         return jsonResponse(res, 200, { oidcEnabled: OIDC_ENABLED });
@@ -993,7 +1260,8 @@ const server = http.createServer((req, res) => {
 
     // Auth check: always redirect to login when not authenticated
     const isMainWidget = reqPath === '/html/index.html';
-    if (isMainWidget) {
+    const isAdminPage = reqPath === '/html/admin.html';
+    if (isMainWidget && !isAdminPage) {
         const cookies = parseCookies(req);
         const token = cookies['c2c_session'];
         const isAuthenticated = token && SESSIONS.has(token) && SESSIONS.get(token).expires > Date.now();
@@ -1050,6 +1318,12 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, BIND_ADDR, () => {
     const isRender = !!process.env.RENDER;
     const displayAddr = isRender ? '0.0.0.0' : BIND_ADDR;
+
+    // Load encrypted SSO config from disk (if exists)
+    if (ADMIN_CONFIG_PASSWORD) {
+        loadEncryptedConfig();
+    }
+
     console.log('╔══════════════════════════════════════════╗');
     console.log('║     Voice Team - Server                ║');
     console.log('╠══════════════════════════════════════════╣');
@@ -1059,6 +1333,11 @@ server.listen(PORT, BIND_ADDR, () => {
         console.log('║  ✅ Running on Render (0.0.0.0)          ║');
     } else {
         console.log('║  ⚠  Local dev only — not for internet   ║');
+    }
+    if (ADMIN_CONFIG_PASSWORD) {
+        console.log('║  🔐 Admin config: enabled                ║');
+    } else {
+        console.log('║  ⚠  Admin config: disabled (set ADMIN_CONFIG_PASSWORD) ║');
     }
     console.log('╚══════════════════════════════════════════╝');
 });
