@@ -753,12 +753,19 @@ async function verifyOidcToken(token) {
     const signingKey = await getOidcSigningKey(decoded.header.kid);
 
     return new Promise((resolve, reject) => {
+        // Try with trailing slash first (Okta default), then without
+        const issuerWithSlash = OIDC_ISSUER.endsWith('/') ? OIDC_ISSUER : OIDC_ISSUER + '/';
+        const issuerWithoutSlash = OIDC_ISSUER.endsWith('/') ? OIDC_ISSUER.slice(0, -1) : OIDC_ISSUER;
+
         jwt.verify(token, signingKey, {
             algorithms: ['RS256'],
             audience: OIDC_CLIENT_ID,
-            issuer: `${OIDC_ISSUER}/`
+            issuer: [issuerWithSlash, issuerWithoutSlash]
         }, (err, payload) => {
-            if (err) return reject(err);
+            if (err) {
+                console.error('JWT verify failed:', err.message, '| issuer:', issuerWithSlash, '| audience:', OIDC_CLIENT_ID);
+                return reject(err);
+            }
             resolve(payload);
         });
     });
