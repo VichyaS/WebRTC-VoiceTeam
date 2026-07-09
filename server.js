@@ -507,11 +507,15 @@ async function authenticateUser(username, password) {
 }
 
 // ── JSON response helper ────────────────────
-function jsonResponse(res, status, data) {
-    res.writeHead(status, {
+function jsonResponse(res, status, data, extraHeaderName, extraHeaderValue) {
+    const headers = {
         'Content-Type': 'application/json; charset=utf-8',
         ...SECURITY_HEADERS
-    });
+    };
+    if (extraHeaderName && extraHeaderValue) {
+        headers[extraHeaderName] = extraHeaderValue;
+    }
+    res.writeHead(status, headers);
     res.end(JSON.stringify(data));
 }
 
@@ -858,16 +862,24 @@ function extractOidcAttributes(userInfo) {
 }
 
 /**
- * ── Admin: Verify admin password from POST body or header ──
+ * ── Admin: Verify admin session token from Bearer header or cookie ──
  */
 function verifyAdminAuth(req) {
     if (!ADMIN_CONFIG_PASSWORD) return false;
-    // Check Authorization header (Bearer token = password)
+    // Check Authorization header (Bearer token = session token from admin login)
     const authHeader = req.headers['authorization'] || '';
+    let token = '';
     if (authHeader.startsWith('Bearer ')) {
-        return authHeader.slice(7) === ADMIN_CONFIG_PASSWORD;
+        token = authHeader.slice(7);
     }
-    return false;
+    // Also check cookie
+    const cookies = parseCookies(req);
+    if (!token) token = cookies['c2c_admin'] || '';
+    if (!token) return false;
+
+    // Look up admin session in SESSIONS store
+    const session = SESSIONS.get(`admin_${token}`);
+    return !!(session && session.expires > Date.now());
 }
 
 /**
@@ -892,7 +904,7 @@ function handleAdminLogin(req, res) {
             success: true,
             token: token,
             config: getAdminConfigSummary()
-        });
+        }, 'Set-Cookie', `c2c_admin=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600`);
     }).catch(e => {
         jsonResponse(res, 400, { success: false, error: e.message });
     });
@@ -902,15 +914,8 @@ function handleAdminLogin(req, res) {
  * Handle GET /api/admin/config — return current config summary (masked secrets)
  */
 function handleAdminGetConfig(req, res) {
-    // Check admin session token
-    const cookies = parseCookies(req);
-    const token = cookies['c2c_admin'] || '';
-    const session = SESSIONS.get(`admin_${token}`);
-    if (!session || session.expires < Date.now()) {
-        // Also allow Bearer token
-        if (!verifyAdminAuth(req)) {
-            return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
-        }
+    if (!verifyAdminAuth(req)) {
+        return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
     }
     jsonResponse(res, 200, { success: true, config: getAdminConfigSummary() });
 }
@@ -919,14 +924,8 @@ function handleAdminGetConfig(req, res) {
  * Handle POST /api/admin/config — save encrypted SSO config
  */
 function handleAdminSaveConfig(req, res) {
-    // Check admin session token
-    const cookies = parseCookies(req);
-    const token = cookies['c2c_admin'] || '';
-    const session = SESSIONS.get(`admin_${token}`);
-    if (!session || session.expires < Date.now()) {
-        if (!verifyAdminAuth(req)) {
-            return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
-        }
+    if (!verifyAdminAuth(req)) {
+        return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
     }
 
     parseJsonBody(req).then(({ oidc, ldap }) => {
@@ -957,13 +956,8 @@ function handleAdminSaveConfig(req, res) {
  * Handle DELETE /api/admin/config — delete encrypted config file
  */
 function handleAdminDeleteConfig(req, res) {
-    const cookies = parseCookies(req);
-    const token = cookies['c2c_admin'] || '';
-    const session = SESSIONS.get(`admin_${token}`);
-    if (!session || session.expires < Date.now()) {
-        if (!verifyAdminAuth(req)) {
-            return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
-        }
+    if (!verifyAdminAuth(req)) {
+        return jsonResponse(res, 401, { success: false, error: 'Not authorized' });
     }
 
     try {
