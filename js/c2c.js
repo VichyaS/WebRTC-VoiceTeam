@@ -192,6 +192,21 @@ async function c2c_startPhone() {
         }
 
         await c2c_devices.enumerate(false);
+
+        // Listen for device changes (e.g. after permission granted, plug/unplug)
+        if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+            navigator.mediaDevices.addEventListener('devicechange', () => {
+                c2c_ac_log('devices: devicechange event — re-enumerating');
+                c2c_devices.enumerate(true).catch((e) => {
+                    c2c_ac_log('devices: re-enumerate error', e);
+                }).finally(() => {
+                    // Update device selection UI if it's currently open
+                    for (let name of c2c_devices.names) {
+                        c2c_fillDeviceList(name);
+                    }
+                });
+            });
+        }
     }
 
     // Optional url parameters: 'call', 'dtmf', 'delay', 'server', 'domain', 'logger', 'token' E.g. ?call=user1&delay=2000&dtmf=1234%23&server=sbc.audiocodes.com
@@ -1410,7 +1425,10 @@ function c2c_selectDevices() {
     document.getElementById('select_devices_done_btn').onclick = c2c_selectDevicesDone;
     c2c_devices.enumerate(true)
         .catch((e) => {
-            c2c_ac_log('getUserMedia() exception', e);
+            c2c_ac_log('getUserMedia() exception: ' + (e.message || e.name || JSON.stringify(e)));
+            c2c_ac_log('Warning: To device selection let enable microphone usage');
+            c2c_ac_log('Warning: To device selection let enable camera usage');
+            c2c_ac_log('Warning: To device selection let enable speaker usage');
         })
         .finally(() => {
             for (let name of c2c_devices.names) {
