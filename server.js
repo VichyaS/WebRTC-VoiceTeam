@@ -71,7 +71,7 @@ const SECURITY_HEADERS = {
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'no-referrer',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    'Permissions-Policy': 'camera=(self), microphone=(self), geolocation=(), interest-cohort=()',
     'Content-Security-Policy': [
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline'",
