@@ -145,15 +145,26 @@ function decryptConfig(payload, password) {
 }
 
 /**
- * Load encrypted config from disk and merge into process.env.
- * Returns true if config was loaded, false if no file exists.
+ * Load encrypted config from env var SSO_ENCRYPTED_CONFIG or from disk file.
+ * Returns true if config was loaded, false otherwise.
  */
 function loadEncryptedConfig() {
     if (!ADMIN_CONFIG_PASSWORD) return false;
-    if (!fs.existsSync(SSO_CONFIG_FILE)) return false;
+
+    let payload = '';
+
+    // Try env var first (works on Render — env vars persist across deploys)
+    if (process.env.SSO_ENCRYPTED_CONFIG) {
+        payload = process.env.SSO_ENCRYPTED_CONFIG;
+    }
+    // Fall back to disk file (works locally)
+    else if (fs.existsSync(SSO_CONFIG_FILE)) {
+        payload = fs.readFileSync(SSO_CONFIG_FILE, 'utf8').trim();
+    }
+
+    if (!payload) return false;
+
     try {
-        const payload = fs.readFileSync(SSO_CONFIG_FILE, 'utf8').trim();
-        if (!payload) return false;
         const config = decryptConfig(payload, ADMIN_CONFIG_PASSWORD);
 
         // Merge OIDC settings (only if not already set by environment variables)
@@ -949,7 +960,14 @@ function handleAdminSaveConfig(req, res) {
         if (ldap) configObj.ldap = ldap;
 
         saveEncryptedConfig(configObj);
-        jsonResponse(res, 200, { success: true, config: getAdminConfigSummary() });
+        // Return the encrypted payload so user can copy it for Render env var
+        const encryptedPayload = encryptConfig(configObj, ADMIN_CONFIG_PASSWORD);
+        jsonResponse(res, 200, {
+            success: true,
+            config: getAdminConfigSummary(),
+            encryptedConfigPayload: encryptedPayload,
+            message: 'Config saved. For Render: copy the payload and set SSO_ENCRYPTED_CONFIG in Environment Variables.'
+        });
     }).catch(e => {
         jsonResponse(res, 400, { success: false, error: e.message });
     });

@@ -144,6 +144,18 @@ textarea{resize:vertical;min-height:50px;font-family:'SFMono-Regular',Consolas,'
                     <div class="status-row"><span class="label">Encrypted Config File</span><span class="value" id="s_encryptedFile">-</span></div>
                 </div>
             </div>
+
+            <!-- Encrypted payload box (for Render deployment) -->
+            <div id="encryptedPayloadBox" style="display:none;margin-top:20px;background:rgba(255,255,255,0.02);border-radius:8px;padding:16px">
+                <h2>📋 Required for Render (Ephemeral Filesystem)</h2>
+                <p style="color:#aaa;font-size:12px;line-height:1.6;margin-bottom:12px">
+                    ⚠️ Render deletes all files on every deploy. To persist this config, copy the payload below and add it as an Environment Variable <strong>SSO_ENCRYPTED_CONFIG</strong> in your Render Dashboard.
+                </p>
+                <textarea id="encryptedPayloadText" rows="3" readonly style="width:100%;padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#0f0;font-size:11px;font-family:monospace;resize:none;word-break:break-all"></textarea>
+                <div class="btn-row">
+                    <button class="btn btn-primary" style="flex:0;font-size:12px;padding:8px 16px" onclick="copyPayload()">📋 Copy</button>
+                </div>
+            </div>
         </div>
     </div>
     <div class="footer">
@@ -242,6 +254,7 @@ function getField(name) {
 
 async function saveConfig() {
     showStatus('configStatus', 'Encrypting and saving...', 'info');
+
     const oidc = {};
     const ldap = {};
 
@@ -291,7 +304,15 @@ async function saveConfig() {
         const data = await r.json();
         if (!data.success) return showStatus('configStatus', data.error || 'Save failed', 'error');
         renderConfig(data.config);
-        showStatus('configStatus', '✅ Configuration encrypted and saved! Restart server to apply.', 'success');
+        showStatus('configStatus', '✅ Configuration encrypted and saved!', 'success');
+
+        // Show encrypted payload for Render
+        if (data.encryptedConfigPayload) {
+            const payloadBox = document.getElementById('encryptedPayloadBox');
+            const payloadText = document.getElementById('encryptedPayloadText');
+            payloadText.value = data.encryptedConfigPayload;
+            payloadBox.style.display = 'block';
+        }
     } catch(e) {
         showStatus('configStatus', 'Error: ' + e.message, 'error');
     }
@@ -312,6 +333,17 @@ async function deleteConfig() {
     } catch(e) {
         showStatus('configStatus', 'Error: ' + e.message, 'error');
     }
+}
+
+function copyPayload() {
+    const textarea = document.getElementById('encryptedPayloadText');
+    textarea.select();
+    textarea.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        showStatus('configStatus', '📋 Payload copied! Add SSO_ENCRYPTED_CONFIG to Render Environment Variables', 'success');
+    }).catch(() => {
+        showStatus('configStatus', '📋 Select all and copy manually', 'info');
+    });
 }
 </script>
 </body>
