@@ -993,6 +993,7 @@ function handleAdminDeleteConfig(req, res) {
 
 /**
  * Handle GET /api/auth/login — redirect to OIDC provider (Okta) login
+ * Dynamically builds callback URL from request host (works on any domain)
  */
 function handleOidcLogin(req, res) {
     if (!OIDC_ENABLED) {
@@ -1018,6 +1019,12 @@ function handleOidcLogin(req, res) {
         return;
     }
 
+    // Dynamically build callback URL from the incoming request host
+    // This works on any domain (localhost, Render, custom domain) without hardcoding
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers['host'] || 'localhost:3000';
+    const dynamicCallbackUrl = `${proto}://${host}/api/auth/callback`;
+
     // Generate state parameter for CSRF protection
     const state = crypto.randomBytes(16).toString('hex');
     SESSIONS.set(`oidc_state_${state}`, { expires: Date.now() + 600000 }); // 10 min
@@ -1025,7 +1032,7 @@ function handleOidcLogin(req, res) {
     const authUrl = `${OIDC_ISSUER}${OIDC_AUTHZ_ENDPOINT}?` + querystring.stringify({
         response_type: 'code',
         client_id: OIDC_CLIENT_ID,
-        redirect_uri: OIDC_CALLBACK_URL,
+        redirect_uri: dynamicCallbackUrl,
         scope: OIDC_SCOPE,
         state: state
     });
@@ -1072,6 +1079,11 @@ async function handleOidcCallback(req, res) {
     }
 
     try {
+        // Build dynamic callback URL from request (same as login redirect)
+        const proto = req.headers['x-forwarded-proto'] || 'http';
+        const host = req.headers['host'] || 'localhost:3000';
+        const dynamicCallbackUrl = `${proto}://${host}/api/auth/callback`;
+
         // Exchange authorization code for tokens
         const tokenResponse = await httpsPost(
             OIDC_ISSUER.replace(/^https?:\/\//, ''),
@@ -1081,7 +1093,7 @@ async function handleOidcCallback(req, res) {
                 client_id: OIDC_CLIENT_ID,
                 client_secret: OIDC_CLIENT_SECRET,
                 code: code,
-                redirect_uri: OIDC_CALLBACK_URL
+                redirect_uri: dynamicCallbackUrl
             }
         );
 
