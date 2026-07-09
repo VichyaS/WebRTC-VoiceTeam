@@ -197,8 +197,10 @@ async function c2c_startPhone() {
         if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
             navigator.mediaDevices.addEventListener('devicechange', () => {
                 c2c_ac_log('devices: devicechange event — re-enumerating');
-                c2c_devices.enumerate(true).catch((e) => {
-                    c2c_ac_log('devices: re-enumerate error', e);
+                // Use enumerate(false) — just re-list devices without getUserMedia
+                // (getUserMedia requires a user gesture)
+                c2c_devices.enumerate(false).catch((e) => {
+                    c2c_ac_log('devices: re-enumerate error: ' + (e.message || e.name || 'unknown'));
                 }).finally(() => {
                     // Update device selection UI if it's currently open
                     for (let name of c2c_devices.names) {
