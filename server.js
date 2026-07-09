@@ -41,6 +41,12 @@ try {
     // Silently ignore — .env is optional
 }
 
+// Load encrypted SSO config from conf/sso_config.enc (if ADMIN_CONFIG_PASSWORD is set)
+// This MUST run before OIDC/LDAP const declarations below
+const ADMIN_CONFIG_PASSWORD = process.env.ADMIN_CONFIG_PASSWORD || '';
+const SSO_CONFIG_FILE = path.join(__dirname, 'conf', 'sso_config.enc');
+loadEncryptedConfig();
+
 const PORT = process.env.PORT || 3000;
 // Auto-detect Render cloud environment — bind to 0.0.0.0 so Render can detect the port
 const isRender = !!process.env.RENDER;
@@ -94,9 +100,6 @@ function isRateLimited(ip) {
 // ──────────────────────────────────────────────
 // Encrypted SSO Configuration (AES-256-GCM)
 // ──────────────────────────────────────────────
-
-const SSO_CONFIG_FILE = path.join(__dirname, 'conf', 'sso_config.enc');
-const ADMIN_CONFIG_PASSWORD = process.env.ADMIN_CONFIG_PASSWORD || '';
 
 /**
  * Derive a 256-bit key from the admin password using PBKDF2.
@@ -1312,11 +1315,6 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, BIND_ADDR, () => {
     const isRender = !!process.env.RENDER;
     const displayAddr = isRender ? '0.0.0.0' : BIND_ADDR;
-
-    // Load encrypted SSO config from disk (if exists)
-    if (ADMIN_CONFIG_PASSWORD) {
-        loadEncryptedConfig();
-    }
 
     console.log('╔══════════════════════════════════════════╗');
     console.log('║     Voice Team - Server                ║');
