@@ -1425,19 +1425,43 @@ function c2c_selectDevices() {
     c2c_ac_log('c2c_selectDevices()');
     c2c_info('');
     document.getElementById('select_devices_done_btn').onclick = c2c_selectDevicesDone;
-    c2c_devices.enumerate(true)
-        .catch((e) => {
-            c2c_ac_log('getUserMedia() exception: ' + (e.message || e.name || JSON.stringify(e)));
-            c2c_ac_log('Warning: To device selection let enable microphone usage');
-            c2c_ac_log('Warning: To device selection let enable camera usage');
-            c2c_ac_log('Warning: To device selection let enable speaker usage');
-        })
-        .finally(() => {
-            for (let name of c2c_devices.names) {
-                c2c_fillDeviceList(name);
-            }
-            c2c_gui_DeviceSelection();
-        });
+
+    // Call getUserMedia directly from the click handler to preserve user gesture
+    // This is required by Chrome/Edge — getUserMedia must be called synchronously
+    // from a user gesture, not inside a Promise .then() chain.
+    const doEnumerate = () => {
+        c2c_devices.enumerate(true)
+            .catch((e) => {
+                c2c_ac_log('getUserMedia() exception: ' + (e.message || e.name || e.toString()));
+                c2c_ac_log('Warning: To device selection let enable microphone usage');
+                c2c_ac_log('Warning: To device selection let enable camera usage');
+                c2c_ac_log('Warning: To device selection let enable speaker usage');
+            })
+            .finally(() => {
+                for (let name of c2c_devices.names) {
+                    c2c_fillDeviceList(name);
+                }
+                c2c_gui_DeviceSelection();
+            });
+    };
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Request camera + microphone permission synchronously from user gesture
+        navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+            .then((stream) => {
+                // Stop the test stream immediately — we just needed permission
+                stream.getTracks().forEach(track => track.stop());
+                c2c_ac_log('devices: getUserMedia permission granted');
+                doEnumerate();
+            })
+            .catch((e) => {
+                c2c_ac_log('devices: getUserMedia permission denied: ' + (e.message || e.name || e.toString()));
+                // Still try enumerate — may get partial list
+                doEnumerate();
+            });
+    } else {
+        doEnumerate();
+    }
 }
 
 function c2c_fillDeviceList(name) {
