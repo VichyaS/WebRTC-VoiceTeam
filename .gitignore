@@ -16,6 +16,9 @@ html/favicon.png
 # Demo users (contains passwords)
 conf/ad_users.json
 
+# Encrypted SSO config (contains sensitive OIDC/LDAP credentials)
+conf/sso_config.enc
+
 # OS files
 .DS_Store
 Thumbs.db

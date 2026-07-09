@@ -4,20 +4,21 @@
   <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="32">
 </a>
 
-A modern WebRTC click-to-call widget with iOS 17-inspired UI, powered by AudioCodes SBC.
+A modern WebRTC click-to-call widget with iOS 17-inspired UI, powered by AudioCodes SBC. Supports **Okta SSO**, **LDAP/AD**, and **local demo** authentication with encrypted configuration management.
 
 ## ✨ Features
 
 - **WebRTC Audio/Video Calls** via AudioCodes SBC (Session Border Controller)
 - **iOS 17 Design** — Frosted glass, pill-shaped controls, Dynamic Island animation
 - **🔐 Okta SSO / LDAP Authentication** — Auto-populates SBC config from user profile
+- **🔒 Encrypted Config Manager** — AES-256-GCM encrypted SSO settings via Admin UI
 - **Device Management** — Select microphone, speaker, camera
 - **Device Test Panel** — Camera preview, mic level meter, speaker test
 - **DTMF Keypad** — Send touch tones during calls
 - **Screen Sharing** — Share your screen during calls
 - **Debug Log Panel** — Real-time logging with SBC diagnostic tool
 - **Settings Panel** — Configure SBC address, SIP user, call type, and more
-- **Security Hardened** — CSP headers, LDAP injection prevention, rate limiting, input validation
+- **Security Hardened** — CSP, HSTS, rate limiting, LDAP injection prevention, JWT verification
 
 ## 🚀 Quick Start
 
@@ -61,12 +62,13 @@ Set these environment variables:
 OIDC_ISSUER=https://your-org.okta.com
 OIDC_CLIENT_ID=0oaXXXXXXXXXXXXXXXXX
 OIDC_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-OIDC_CALLBACK_URL=http://localhost:3000/api/auth/callback
 ```
+
+> **Note:** `OIDC_CALLBACK_URL` is auto-detected from the request host — no need to hardcode it.
 
 **Okta Admin Console Setup:**
 1. Create a **Web Application** (OpenID Connect)
-2. Set **Login redirect URIs** to `http://localhost:3000/api/auth/callback`
+2. Set **Login redirect URIs** to `https://your-app.com/api/auth/callback`
 3. Grant **Okta API Scopes**: `okta.users.read.self`
 4. **Profile Editor** → Add custom attributes: `sbcDomain`, `sbcAddresses`, `sipCall`, `sipCaller`, `displayName`
 5. **Directory → People** → Fill in attribute values per user
@@ -85,6 +87,39 @@ LDAP_SEARCH_FILTER=(uid={{username}})
 
 Edit `conf/ad_users.json` (gitignored for security).
 Demo users are automatically **disabled** when OIDC or LDAP is configured.
+
+---
+
+## 🔒 Encrypted SSO Config Manager
+
+Configure SSO credentials through a secure web UI instead of editing environment variables directly.
+
+### How it works
+
+1. Set `ADMIN_CONFIG_PASSWORD` as an environment variable (strong password, 16+ chars)
+2. Visit `/html/admin.html` → enter password → unlock configuration panel
+3. Fill in OIDC/LDAP settings → click **Save & Encrypt**
+4. Data is encrypted with **AES-256-GCM** (PBKDF2 key derivation, 100K iterations)
+5. Encrypted payload is stored in `conf/sso_config.enc` (local) or `SSO_ENCRYPTED_CONFIG` env var (Render)
+
+### For Render Deployment
+
+Render has an **ephemeral filesystem** — files are deleted on every deploy. After saving config:
+
+1. Copy the encrypted payload from the Admin UI
+2. Go to **Render Dashboard** → Environment Variables
+3. Add `SSO_ENCRYPTED_CONFIG` with the copied payload
+4. Deploy — the config persists across all future deploys
+
+### Security
+
+| Layer | Protection |
+|---|---|
+| **Encryption** | AES-256-GCM with random salt + IV per encryption |
+| **Key Derivation** | PBKDF2 with 100,000 iterations |
+| **Secrets Masking** | API responses show only first/last 4 chars |
+| **Session Auth** | Admin session expires after 1 hour |
+| **File Storage** | Encrypted blob — unreadable without password |
 
 ---
 
@@ -120,7 +155,9 @@ Demo users are automatically **disabled** when OIDC or LDAP is configured.
    OIDC_ISSUER=https://your-org.okta.com
    OIDC_CLIENT_ID=0oaXXXXXXXXXXXXXXXXX
    OIDC_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-   OIDC_CALLBACK_URL=https://your-app.onrender.com/api/auth/callback
+   
+   # For Admin UI (optional but recommended)
+   ADMIN_CONFIG_PASSWORD=your-strong-admin-password
    ```
 
 6. **Click "Create Web Service"**
@@ -130,38 +167,56 @@ Demo users are automatically **disabled** when OIDC or LDAP is configured.
 ### Post-Deploy Checklist
 
 - [ ] Set Okta/LDAP env vars in Render dashboard
+- [ ] (Optional) Set `ADMIN_CONFIG_PASSWORD` for Admin UI
 - [ ] Configure SBC WebSocket address (in Okta user profile)
 - [ ] Set SIP user/caller details (in Okta user profile)
 - [ ] Enable HTTPS (Render provides this automatically)
 - [ ] Test WebSocket connectivity via Debug Log → "Test SBC"
 - [ ] Test login via Okta SSO → user menu → verify auto-populated config
 
-### How Authentication Works on Render
-
-1. User visits `https://your-app.onrender.com`
-2. Server checks if OIDC/LDAP is configured (via env vars)
-3. If configured → **redirects to login page** (`/html/login.html`)
-4. Login page shows **Okta SSO button** (if OIDC enabled) + **username/password form** (if LDAP enabled)
-5. After successful login → redirects to main widget
-6. User menu shows auto-populated SBC config from Okta profile
-
 ---
 
 ## 🛡️ Security
 
-This project follows security best practices:
+### Security Headers
 
-- **Content-Security-Policy** headers restrict script/style sources
-- **XSS prevention** — All user-controlled data uses `textContent` or `c2c_escapeHtml()`
-- **Input validation** — Username/password validated for charset and length
-- **LDAP injection protection** — Special characters sanitized before LDAP queries
-- **JSON body size limit** — Max 10KB to prevent DOS attacks
-- **Rate limiting** — Dev server limits requests (100/min per IP)
-- **Directory traversal prevention** — Server validates file paths
-- **HttpOnly cookies** — Session tokens not accessible via JavaScript
+| Header | Value |
+|--------|-------|
+| `Content-Security-Policy` | Restricts script/style sources, form actions, frame ancestors |
+| `Strict-Transport-Security` | max-age=1 year, includeSubDomains |
+| `X-Content-Type-Options` | nosniff |
+| `X-Frame-Options` | DENY |
+| `Referrer-Policy` | no-referrer |
+| `Permissions-Policy` | camera=(), microphone=(), geolocation=() |
+
+### Authentication Security
+
+- **OIDC JWT Verification** — All ID tokens are cryptographically verified via JWKS (RS256)
+- **CSRF Protection** — OIDC state parameter with random tokens
+- **HttpOnly + Secure + SameSite=Strict** cookies — Session tokens protected from XSS/CSRF
 - **Session TTL** — Sessions expire after 24 hours
+- **Admin Session** — Short-lived (1 hour), separate from user sessions
+
+### Input Validation & Injection Prevention
+
+- **LDAP Injection** — All RFC 4515 special characters sanitized before queries
+- **JSON Body Size Limit** — Max 10KB to prevent DOS attacks
+- **Username Validation** — Only printable ASCII characters allowed
+- **Path Traversal Prevention** — Server validates all file paths
+
+### Rate Limiting
+
+- **100 requests/min per IP** — Protects against brute-force and DOS attacks
+- Applied to all API endpoints and static file requests
+
+### Deployment Security
+
 - **No hardcoded secrets** — All credentials via environment variables
-- **Minimal attack surface** — Only GET/HEAD requests allowed
+- **Demo users disabled** automatically when OIDC/LDAP configured
+- **Encrypted config storage** — AES-256-GCM with PBKDF2
+- **Minimal attack surface** — Only GET/HEAD requests allowed for static files
+
+---
 
 ## 📁 Project Structure
 
@@ -169,11 +224,13 @@ This project follows security best practices:
 WebRTC-VoiceTeam/
 ├── conf/
 │   ├── config.js             # SBC and call configuration
-│   └── ad_users.json         # Local demo users (gitignored)
+│   ├── ad_users.json         # Local demo users (gitignored)
+│   └── sso_config.enc        # Encrypted SSO config (gitignored)
 ├── css/c2c.css               # iOS 17-style UI stylesheet
 ├── html/
 │   ├── index.html            # Main widget page
-│   └── login.html            # Login page (Okta/LDAP auth)
+│   ├── login.html            # Login page (Okta/LDAP auth)
+│   └── admin.html            # Admin config UI (encrypted SSO manager)
 ├── js/
 │   ├── c2c.js                # Core widget logic
 │   ├── c2c_utils.js          # Audio player, device selection utilities
@@ -189,15 +246,20 @@ WebRTC-VoiceTeam/
 
 ## 🔧 API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/login` | POST | LDAP/Demo user login |
-| `/api/logout` | POST | Clear session |
-| `/api/session` | GET | Check authentication status |
-| `/api/auth/status` | GET | Check if OIDC is configured |
-| `/api/auth/login` | GET | Redirect to Okta SSO |
-| `/api/auth/callback` | GET | Okta OAuth callback |
-| `/api/auth/diagnose` | GET | Debug session attributes |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/login` | POST | Public | LDAP/Demo user login |
+| `/api/logout` | POST | Session | Clear session |
+| `/api/session` | GET | Public | Check authentication status |
+| `/api/config` | GET | Session | Get user's SBC config attributes |
+| `/api/auth/status` | GET | Public | Check if OIDC is configured |
+| `/api/auth/login` | GET | Public | Redirect to Okta SSO |
+| `/api/auth/callback` | GET | Public | Okta OAuth callback |
+| `/api/auth/diagnose` | GET | Session | Debug session attributes |
+| `/api/admin/login` | POST | Public | Admin password login |
+| `/api/admin/config` | GET | Admin | Get current config summary |
+| `/api/admin/config` | POST | Admin | Save encrypted SSO config |
+| `/api/admin/config` | DELETE | Admin | Delete encrypted config |
 
 ## ❓ Troubleshooting
 
@@ -214,10 +276,24 @@ WebRTC-VoiceTeam/
 2. Check `GET /api/auth/status` returns `{"oidcEnabled":true}`
 3. Ensure **Okta API Scopes** includes `okta.users.read.self`
 
+### "redirect_uri mismatch" error from Okta
+
+1. The callback URL is auto-detected from the request host
+2. Ensure `https://your-app.onrender.com/api/auth/callback` is in Okta's **Login redirect URIs**
+3. For local dev: `http://localhost:3000/api/auth/callback`
+
+### Admin UI shows "Not authorized"
+
+1. Ensure `ADMIN_CONFIG_PASSWORD` is set as an environment variable
+2. After login, the session token is valid for 1 hour
+3. If using `SSO_ENCRYPTED_CONFIG`, ensure `ADMIN_CONFIG_PASSWORD` matches the one used when saving
+
 ### SBC Configuration (AudioCodes v7.40)
 
 See [SBC Configuration Guide](docs/sbc-config-guide.md) or the comments in `conf/config.js`.
 
+---
+
 ## 📄 License
 
-MIT
+MIT License — see [LICENSE](LICENSE) for details.

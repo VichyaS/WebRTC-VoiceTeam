@@ -71,6 +71,7 @@ const SECURITY_HEADERS = {
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'no-referrer',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
     'Content-Security-Policy': [
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline'",
@@ -562,7 +563,8 @@ function parseJsonBody(req) {
 function sanitizeLdapValue(value) {
     if (typeof value !== 'string') return '';
     // Limit length to 100 chars
-    return value.slice(0, 100).replace(/[\\*()\0]/g, '\\$&');
+    // Escape all LDAP filter special characters per RFC 4515
+    return value.slice(0, 100).replace(/[\\*()\0&|!=~><: \t\r\n\-\[\]]/g, '\\$&');
 }
 
 /**
@@ -605,7 +607,7 @@ async function handleLogin(req, res) {
         // Set cookie and return
         res.writeHead(200, {
             'Content-Type': 'application/json; charset=utf-8',
-            'Set-Cookie': `c2c_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_TTL / 1000}`,
+            'Set-Cookie': `c2c_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_TTL / 1000}; Secure`,
             ...SECURITY_HEADERS
         });
         res.end(JSON.stringify({
@@ -626,7 +628,7 @@ function handleLogout(req, res) {
 
     res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',
-        'Set-Cookie': 'c2c_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0',
+        'Set-Cookie': 'c2c_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0; Secure',
         ...SECURITY_HEADERS
     });
     res.end(JSON.stringify({ success: true }));
@@ -918,7 +920,7 @@ function handleAdminLogin(req, res) {
             success: true,
             token: token,
             config: getAdminConfigSummary()
-        }, 'Set-Cookie', `c2c_admin=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600`);
+        }, 'Set-Cookie', `c2c_admin=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600; Secure`);
     }).catch(e => {
         jsonResponse(res, 400, { success: false, error: e.message });
     });
@@ -1103,17 +1105,17 @@ async function handleOidcCallback(req, res) {
             return;
         }
 
-        // Decode ID token to get user info
+        // Decode ID token to get user info — always verify signature first
         let userInfo = {};
         if (tokenResponse.id_token) {
             try {
-                userInfo = jwt.decode(tokenResponse.id_token);
-            } catch (e) {
-                try {
-                    userInfo = await verifyOidcToken(tokenResponse.id_token);
-                } catch (verifyErr) {
-                    userInfo = jwt.decode(tokenResponse.id_token);
-                }
+                // Always verify the JWT signature (RS256 via JWKS)
+                userInfo = await verifyOidcToken(tokenResponse.id_token);
+            } catch (verifyErr) {
+                console.error('OIDC token verification failed:', verifyErr.message);
+                res.writeHead(302, { Location: '/html/login.html?error=token_verification_failed' });
+                res.end();
+                return;
             }
         }
 
@@ -1162,7 +1164,7 @@ async function handleOidcCallback(req, res) {
         // Set cookie and redirect to main page
         res.writeHead(302, {
             Location: '/',
-            'Set-Cookie': `c2c_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_TTL / 1000}`
+            'Set-Cookie': `c2c_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_TTL / 1000}; Secure`
         });
         res.end();
 
