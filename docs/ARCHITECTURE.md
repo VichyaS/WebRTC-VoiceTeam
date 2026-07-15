@@ -255,8 +255,8 @@ graph TB
             RENDER_LOGS["Render Logs"]
         end
 
-        subgraph Ephemeral["⚠️ Ephemeral Filesystem<br/>(Deleted on Deploy)"]
-            SSO_FILE["conf/sso_config.enc"]
+        subgraph Ephemeral["⚠️ Ephemeral Filesystem"]
+            SSO_FILE["conf/sso_config.enc<br/>(deleted on deploy)"]
         end
     end
 
@@ -272,7 +272,7 @@ graph TB
     WebService -->|WebSocket| SBC
     SERVER -->|Reads| EnvVars
     SERVER -->|Decrypt| SSO_ENC
-    SERVER -->|Write (local only)| Ephemeral
+    SERVER -->|Write local only| Ephemeral
     SERVER -->|Logs| RENDER_LOGS
     CONFIG -->|Served to Browser| User
 ```
