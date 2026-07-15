@@ -227,6 +227,8 @@ WebRTC-VoiceTeam/
 │   ├── ad_users.json         # Local demo users (gitignored)
 │   └── sso_config.enc        # Encrypted SSO config (gitignored)
 ├── css/c2c.css               # iOS 17-style UI stylesheet
+├── docs/
+│   └── ARCHITECTURE.md       # 🏗️ Architecture diagrams & flow docs
 ├── html/
 │   ├── index.html            # Main widget page
 │   ├── login.html            # Login page (Okta/LDAP auth)
@@ -242,6 +244,20 @@ WebRTC-VoiceTeam/
 ├── .env.example              # Environment variable template
 ├── render.yaml               # Render deployment config
 └── README.md
+```
+
+## 🏗️ Architecture Diagrams
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed technical diagrams including:
+
+- **System Architecture Overview** — Full component diagram
+- **OIDC Okta SSO Flow** — Step-by-step sequence diagram
+- **LDAP/AD Authentication Flow** — Server-to-LDAP interaction
+- **Encrypted Config Manager Flow** — How AES-256-GCM config works
+- **WebRTC Call Flow** — SIP signaling and media path
+- **Render Deployment Architecture** — How it runs on Render
+- **Config Data Flow** — How auth attributes reach the widget
+- **Security Architecture** — All security layers
 ```
 
 ## 🔧 API Endpoints

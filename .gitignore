@@ -2,7 +2,9 @@
 node_modules/
 
 # AudioCodes proprietary documentation
+# AudioCodes proprietary documentation (except ARCHITECTURE.md)
 docs/
+!docs/ARCHITECTURE.md
 
 # Proprietary/protected assets
 html/logo-audio-codes.svg
