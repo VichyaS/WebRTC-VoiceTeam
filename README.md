@@ -229,7 +229,8 @@ WebRTC-VoiceTeam/
 ├── css/c2c.css               # iOS 17-style UI stylesheet
 ├── docs/
 │   ├── ARCHITECTURE.md           # 🏗️ System architecture diagrams & flow docs
-│   └── WEBRTC_ARCHITECTURE.md    # 📞 WebRTC internals, log analysis & troubleshooting
+│   ├── WEBRTC_ARCHITECTURE.md    # 📞 WebRTC internals, log analysis & troubleshooting
+│   └── IFRAME_ARCHITECTURE.md    # 🖼️ Iframe browser internals & security model
 ├── html/
 │   ├── index.html            # Main widget page
 │   ├── login.html            # Login page (Okta/LDAP auth)
