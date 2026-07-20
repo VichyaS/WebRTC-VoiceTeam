@@ -321,16 +321,6 @@ See [docs/WEBRTC_ARCHITECTURE.md](docs/WEBRTC_ARCHITECTURE.md) for in-depth docu
 2. After login, the session token is valid for 1 hour
 3. If using `SSO_ENCRYPTED_CONFIG`, ensure `ADMIN_CONFIG_PASSWORD` matches the one used when saving
 
-### SBC Configuration (AudioCodes v7.40)
-
-See [SBC Configuration Guide](docs/sbc-config-guide.md) or the comments in `conf/config.js`.
-
-**📖 เอกสารที่เกี่ยวข้อง:**
-- [🏗️ System Architecture Overview](docs/ARCHITECTURE.md#1-system-architecture-overview) — ภาพรวมระบบ SBC + WebRTC
-- [📞 WebRTC Call Flow](docs/ARCHITECTURE.md#5-webrtc-call-flow) — SIP signaling และ media path ผ่าน SBC
-- [🔧 SBC Connection Diagnostic](docs/WEBRTC_ARCHITECTURE.md#52-diagnostic-tool-c2cdiagnosesbc) — วิธีใช้ SBC Diagnostic Tool ใน Debug Panel
-- [🖼️ Iframe Security & Deployment](docs/IFRAME_ARCHITECTURE.md#84-content-security-policy-frame-ancestors) — CSP frame-ancestors สำหรับ SBC WebSocket
-
 ---
 
 ## 📄 License
