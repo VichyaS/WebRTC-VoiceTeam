@@ -323,6 +323,15 @@ See [docs/WEBRTC_ARCHITECTURE.md](docs/WEBRTC_ARCHITECTURE.md) for in-depth docu
 
 ---
 
+**📖 เอกสารที่เกี่ยวข้อง:**
+
+- [🏗️ System Architecture Overview](https://github.com/VichyaS/WebRTC-VoiceTeam/blob/main/docs/ARCHITECTURE.md#1-system-architecture-overview) — ภาพรวมระบบ SBC + WebRTC
+- [📞 WebRTC Call Flow](https://github.com/VichyaS/WebRTC-VoiceTeam/blob/main/docs/ARCHITECTURE.md#5-webrtc-call-flow) — SIP signaling และ media path ผ่าน SBC
+- [🔧 SBC Connection Diagnostic](https://github.com/VichyaS/WebRTC-VoiceTeam/blob/main/docs/WEBRTC_ARCHITECTURE.md#52-diagnostic-tool-c2cdiagnosesbc) — วิธีใช้ SBC Diagnostic Tool ใน Debug Panel
+- [🖼️ Iframe Security & Deployment](https://github.com/VichyaS/WebRTC-VoiceTeam/blob/main/docs/IFRAME_ARCHITECTURE.md#84-content-security-policy-frame-ancestors) — CSP frame-ancestors สำหรับ SBC WebSocket
+
+---
+
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.
