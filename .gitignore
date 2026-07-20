@@ -2,9 +2,10 @@
 node_modules/
 
 # AudioCodes proprietary documentation
-# AudioCodes proprietary documentation (except ARCHITECTURE.md)
+# AudioCodes proprietary documentation (except ARCHITECTURE.md and WEBRTC_ARCHITECTURE.md)
 docs/*
 !docs/ARCHITECTURE.md
+!docs/WEBRTC_ARCHITECTURE.md
 
 # Proprietary/protected assets
 html/logo-audio-codes.svg
