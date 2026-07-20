@@ -192,11 +192,7 @@ stateDiagram-v2
     KeepAlive --> Idle: Timer expires → deinit()
     Disconnecting --> Idle: No keep-alive → immediate deinit()
     
-    note right of Established
-        Media stats collected via
-        RTCPeerConnection.getStats()
-        every 1 second during test call
-    end
+    note right of Established : Media stats collected via RTCPeerConnection.getStats() every 1s during test call
 ```
 
 ### 1.4 Media Flow (SRTP/DTLS)
