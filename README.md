@@ -276,7 +276,6 @@ See [docs/WEBRTC_ARCHITECTURE.md](docs/WEBRTC_ARCHITECTURE.md) for in-depth docu
 - **Git Workflow** — Branch strategy, commit conventions, rollback commands
 
 <iframe src="docs/WEBRTC_ARCHITECTURE.md" width="100%" height="600px" style="border: 1px solid #ccc; border-radius: 8px; margin-top: 12px;" title="WebRTC Architecture Document"></iframe>
-```
 
 ## 🔧 API Endpoints
 
