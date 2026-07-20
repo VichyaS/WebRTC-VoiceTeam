@@ -275,7 +275,7 @@ See [docs/WEBRTC_ARCHITECTURE.md](docs/WEBRTC_ARCHITECTURE.md) for in-depth docu
 - **Voice Quality Scoring** — Browser G.711 matrix + SBC X-VoiceQuality
 - **Git Workflow** — Branch strategy, commit conventions, rollback commands
 
-<iframe src="docs/WEBRTC_ARCHITECTURE.md" width="100%" height="600px" style="border: 1px solid #ccc; border-radius: 8px; margin-top: 12px;" title="WebRTC Architecture Document"></iframe>
+> 📘 **ต้องการดูเอกสารแบบเต็ม?** เปิด [docs/WEBRTC_ARCHITECTURE.md](docs/WEBRTC_ARCHITECTURE.md) โดยตรง หรือเปิดผ่าน local dev server ที่ `http://localhost:3000/docs/WEBRTC_ARCHITECTURE.md`
 
 ## 🔧 API Endpoints
 
