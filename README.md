@@ -228,7 +228,8 @@ WebRTC-VoiceTeam/
 │   └── sso_config.enc        # Encrypted SSO config (gitignored)
 ├── css/c2c.css               # iOS 17-style UI stylesheet
 ├── docs/
-│   └── ARCHITECTURE.md       # 🏗️ Architecture diagrams & flow docs
+│   ├── ARCHITECTURE.md           # 🏗️ System architecture diagrams & flow docs
+│   └── WEBRTC_ARCHITECTURE.md    # 📞 WebRTC internals, log analysis & troubleshooting
 ├── html/
 │   ├── index.html            # Main widget page
 │   ├── login.html            # Login page (Okta/LDAP auth)
@@ -258,6 +259,22 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed technical diagrams
 - **Render Deployment Architecture** — How it runs on Render
 - **Config Data Flow** — How auth attributes reach the widget
 - **Security Architecture** — All security layers
+
+### 📞 WebRTC Architecture & Log Analysis
+
+See [docs/WEBRTC_ARCHITECTURE.md](docs/WEBRTC_ARCHITECTURE.md) for in-depth documentation including:
+
+- **WebRTC SDK Initialization** — Detailed sequence diagrams of engine startup
+- **SIP Call State Machine** — All states from Idle → Connecting → Active → Terminating
+- **Media Flow (SRTP/DTLS)** — ICE, DTLS handshake, and encrypted RTP flow
+- **Logging System** — Logger hierarchy, format, prefix categories
+- **Log Analysis Guide** — 5 error patterns with diagnosis and fixes
+- **Troubleshooting Flowchart** — Step-by-step diagnostic workflow
+- **SBC Diagnostic Tool** — Auto-scan ports/paths to find working WebSocket URL
+- **Voice Quality Scoring** — Browser G.711 matrix + SBC X-VoiceQuality
+- **Git Workflow** — Branch strategy, commit conventions, rollback commands
+
+<iframe src="docs/WEBRTC_ARCHITECTURE.md" width="100%" height="600px" style="border: 1px solid #ccc; border-radius: 8px; margin-top: 12px;" title="WebRTC Architecture Document"></iframe>
 ```
 
 ## 🔧 API Endpoints
