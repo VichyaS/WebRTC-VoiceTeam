@@ -83,7 +83,7 @@
 ```mermaid
 sequenceDiagram
     participant User as 👤 User
-    parent Browser as 🌐 Parent Page
+    participant Browser as 🌐 Parent Page
     participant HTMLParser as HTML Parser
     participant DOMTree as DOM Tree
     participant Network as 🌍 Network Layer
